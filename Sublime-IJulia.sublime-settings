@@ -1,0 +1,12 @@
+{
+	// "julia_command" refers to the absolute path of your julia executable.
+	// By default, it is assumed that your julia is in your system PATH.
+	// To launch a specific julia executable or if your julia is NOT in your
+	// system PATH, modify your platform's value string below with your 
+	// julia's absolute path.
+	// e.g. "unix": "/home/username/julia/usr/bin/julia-release-readline"
+	"julia_command": {
+		"unix": "julia",
+		"windows": "julia.bat"
+		}
+}

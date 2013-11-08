@@ -1,0 +1,17 @@
+<snippet>
+	<content><![CDATA[
+module ${1:modulename}
+
+${2:using #dependencies}
+
+${3:import #methods to overload}
+
+${4:export #types/methods to export}
+
+${0: #module body}
+
+end
+]]></content>
+	<tabTrigger>module</tabTrigger>
+	<scope>source.julia</scope>
+</snippet>

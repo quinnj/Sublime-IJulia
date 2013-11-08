@@ -1,0 +1,54 @@
+#top-level rules for embedded SQL source and flagging console errors
+<dict>
+	<key>include</key>
+	<string>#EmbeddedSQL</string>
+</dict>
+<dict>
+	<key>include</key>
+	<string>#Console-ERROR</string>
+</dict>
+#the above rule definitions to go in the repository
+<key>Console-ERROR</key>
+<dict>
+	<key>patterns</key>
+	<array>
+		<dict>
+			<key>match</key>
+			<string>ERROR:.*</string>
+			<key>name</key>
+			<string>invalid.deprecated.julia</string>
+		</dict>
+	</array>
+</dict>
+<key>EmbeddedSQL</key>
+<dict>
+	<key>patterns</key>
+	<array>
+		<dict>
+			<key>begin</key>
+			<string>\bquery\("</string>
+			<key>beginCaptures</key>
+			<dict>
+				<key>1</key>
+				<dict>
+					<key>name</key>
+					<string>support.function.julia</string>
+				</dict>
+			</dict>
+			<key>end</key>
+			<string>"</string>
+			<key>patterns</key>
+			<array>
+				<dict>	
+					<key>include</key>
+					<string>source.sql</string>
+				</dict>
+			</array>
+		</dict>
+	</array>
+</dict>
+
+#this is to stop the console from barfing on the backtick in the opening Julia banner
+<key>begin</key>
+<string>`(?!\s\|\s\s\|)</string>
+<key>beginCaptures</key>

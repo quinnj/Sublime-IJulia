@@ -1,0 +1,9 @@
+<snippet>
+	<content><![CDATA[
+function ${1:name}(${3:args})
+	${0:#function body}
+end
+]]></content>
+	<tabTrigger>function</tabTrigger>
+	<scope>source.julia</scope>
+</snippet>

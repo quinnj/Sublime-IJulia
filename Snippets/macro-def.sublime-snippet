@@ -1,0 +1,9 @@
+<snippet>
+	<content><![CDATA[
+macro ${1:name}(${3:args})
+	${0:#macro body}
+end
+]]></content>
+	<tabTrigger>macro</tabTrigger>
+	<scope>source.julia</scope>
+</snippet>

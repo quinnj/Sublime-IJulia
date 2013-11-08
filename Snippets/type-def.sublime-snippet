@@ -1,0 +1,9 @@
+<snippet>
+	<content><![CDATA[
+type ${1:name}
+	${0:#type body}
+end
+]]></content>
+	<tabTrigger>type</tabTrigger>
+	<scope>source.julia</scope>
+</snippet>

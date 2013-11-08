@@ -1,0 +1,8 @@
+[
+    { "caption": "Sublime-IJulia: Open New REPL", "command": "i_julia_open"},
+    { "caption": "Sublime-IJulia: Enter", "command": "i_julia_enter"},
+    { "caption": "Sublime-IJulia: Receive", "command": "i_julia_receive"},
+    { "caption": "Sublime-IJulia: Evaluate Selection", "command": "julia_transfer_current", "args": {"scope": "selection"}},
+    { "caption": "Sublime-IJulia: Evaluate Line", "command": "julia_transfer_current", "args": {"scope": "lines"}},
+    { "caption": "Sublime-IJulia: Evaluate File", "command": "julia_transfer_current", "args": {"scope": "file"}}
+]

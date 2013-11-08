@@ -1,0 +1,9 @@
+<snippet>
+	<content><![CDATA[
+for ${1:var} = ${2:range/iterable}
+	${0:#for body}
+end
+]]></content>
+	<tabTrigger>for</tabTrigger>
+	<scope>source.julia</scope>
+</snippet>

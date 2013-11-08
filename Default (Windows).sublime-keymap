@@ -1,0 +1,119 @@
+[
+	{ "keys": ["up"], "command": "julia_view_previous",
+	"context":
+		[
+			{ "key": "setting.julia", "operator": "equal", "operand": true },
+			{ "key": "auto_complete_visible", "operator": "equal", "operand": false }
+		]
+	},
+	{ "keys": ["alt+p"], "command": "julia_view_previous",
+	"context":
+		[
+			{ "key": "setting.julia", "operator": "equal", "operand": true }
+		]
+	},
+	{ "keys": ["down"], "command": "julia_view_next",
+	"context":
+		[
+			{ "key": "setting.julia", "operator": "equal", "operand": true },
+			{ "key": "auto_complete_visible", "operator": "equal", "operand": false }
+		]
+	},
+	{ "keys": ["alt+n"], "command": "julia_view_next",
+	"context":
+		[
+			{ "key": "setting.julia", "operator": "equal", "operand": true }
+		]
+	},
+	{ "keys": ["enter"], "command": "i_julia_enter", "args": {},
+	"context":
+		[
+			{ "key": "setting.julia", "operator": "equal", "operand": true },
+			{ "key": "auto_complete_visible", "operator": "equal", "operand": false }
+		]
+	},
+	{ "keys": ["shift+enter"], "command": "i_julia_shift_enter", "args": {},
+	"context":
+		[
+			{ "key": "setting.julia", "operator": "equal", "operand": true },
+			{ "key": "auto_complete_visible", "operator": "equal", "operand": false }
+		]
+	},
+	{ "keys": ["escape"], "command": "julia_escape", "args": {},
+	"context":
+		[
+			{ "key": "auto_complete_visible", "operator": "equal", "operand": false },
+			{ "key": "setting.julia", "operator": "equal", "operand": true }
+		]
+	},
+	{ "keys": ["backspace"], "command": "julia_backspace", "args": {},
+	"context":
+		[
+			{ "key": "setting.julia", "operator": "equal", "operand": true },
+			{ "key": "selection_empty", "operator": "equal", "operand": true, "match_all": true }
+		]
+	},
+	{ "keys": ["ctrl+backspace"], "command": "julia_ctrl_backspace", "args": {},
+	"context":
+		[
+			{ "key": "setting.julia", "operator": "equal", "operand": true },
+			{ "key": "selection_empty", "operator": "equal", "operand": true, "match_all": true }
+		]
+	},
+	{ "keys": ["left"], "command": "julia_left", "args": {},
+	"context":
+		[
+			{ "key": "setting.julia", "operator": "equal", "operand": true }
+		]
+	},
+	{ "keys": ["home"], "command": "julia_home", "args": {},
+	"context":
+		[
+			{ "key": "setting.julia", "operator": "equal", "operand": true }
+		]
+	},
+	{ "keys": ["shift+left"], "command": "julia_shift_left", "args": {},
+	"context":
+		[
+			{ "key": "setting.julia", "operator": "equal", "operand": true }
+		]
+	},
+	{ "keys": ["shift+home"], "command": "julia_shift_home", "args": {},
+	"context":
+		[
+			{ "key": "setting.julia", "operator": "equal", "operand": true }
+		]
+	},
+	{ "keys": ["shift+ctrl+c"], "command": "julia_clear",
+	"context":
+		[
+			{ "key": "setting.julia", "operator": "equal", "operand": true }
+		]
+	},
+
+	{ "keys": ["ctrl+shift+r"], "command": "julia_restart",
+	"context":
+		[
+			{ "key": "setting.julia", "operator": "equal", "operand": true }
+		]
+	},
+
+	{ "keys": ["ctrl+enter"], "command": "julia_transfer_current", "args": {"scope": "selection"},
+	"context":
+		[
+			{ "key": "selection_empty", "operator": "equal", "operand": false, "match_all": true }
+		]
+	},
+	{ "keys": ["ctrl+enter"], "command": "julia_transfer_current", "args": {"scope": "lines"},
+	"context":
+		[
+			{ "key": "selection_empty", "operator": "equal", "operand": true, "match_all": true }
+		]
+	},
+	{ "keys": ["ctrl+shift+enter"], "command": "julia_transfer_current", "args": {"scope": "file"},
+	"context":
+		[
+			{ "key": "selection_empty", "operator": "equal", "operand": true, "match_all": true }
+		]
+	}
+]

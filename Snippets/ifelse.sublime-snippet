@@ -1,0 +1,11 @@
+<snippet>
+	<content><![CDATA[
+if ${1:cond}
+	${2:#then}
+else
+	${0:#default}
+end
+]]></content>
+	<tabTrigger>ifelse</tabTrigger>
+	<scope>source.julia</scope>
+</snippet>
