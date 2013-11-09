@@ -1,13 +1,13 @@
 import os, sublime, sublime_plugin
 from . import KernelManager
-from .ZMQ import pkg_dir
+from .ZMQ import pkg_dir, zmq_profile
 
 SETTINGS_FILE = 'Sublime-IJulia.sublime-settings'
 
 class JuliaView(object):
     def start_kernel(self):
         print("starting kernel...")
-        self.kernel = KernelManager.KernelManager(self.cmd, self.id)
+        self.kernel = KernelManager.KernelManager(self.cmd, self.id, self.profile)
         self.reader = KernelManager.RecvThread(self.kernel, self)
         self.reader.start()
         self.kernel.execute("Base.banner()")
@@ -20,7 +20,9 @@ class JuliaView(object):
             cmd = cmd["windows"]
         else:
             cmd = cmd["unix"]
-        self.cmd = cmd + " " + pkg_dir + "/IJulia/src/kernel.jl "
+        filename = "\"" + sublime.packages_path() + '/IJulia/profile-' + str(id) + '.json\"'
+        self.cmd = cmd + " " + pkg_dir + "/IJulia/src/kernel.jl " + filename
+        self.profile = zmq_profile(filename, id)
         sublime.set_timeout_async(self.start_kernel,0)        
         self._view = view
         self._output_end = view.size()

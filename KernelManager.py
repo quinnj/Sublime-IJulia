@@ -7,22 +7,22 @@ import threading
 import time
 
 class KernelManager(object):
-    def __init__(self, cmd, id):
+    def __init__(self, cmd, id, profile):
         self.id = id
         if os.name == "nt":
             creationflags = 0x8000000 # CREATE_NO_WINDOW
         else:
             creationflags = 0
-        cmd = cmd + zmq_profile(id)
         print("cmd: %s" % cmd)
         self.kernel = subprocess.Popen(cmd, creationflags=creationflags)
+        ip = profile['transport'] + '://' + profile['ip'] + ':'
         self.context = Context()
         self.heartbeat = Socket(self.context, REQ)
-        self.heartbeat.connect("tcp://127.0.0.1:5680")
+        self.heartbeat.connect(ip + str(profile['hb_port']))
         self.shell = Socket(self.context, REQ)
-        self.shell.connect("tcp://127.0.0.1:5681")
+        self.shell.connect(ip + str(profile['shell_port']))
         self.sub = Socket(self.context, SUB)
-        self.sub.connect("tcp://127.0.0.1:5682")
+        self.sub.connect(ip + str(profile['iopub_port']))
 
     def execute(self, code):
         execute_request = Msg(["execute_request"], 
