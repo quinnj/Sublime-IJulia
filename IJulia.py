@@ -34,7 +34,7 @@ class JuliaView(object):
         self.banner = 1
         self.in_count = 1
         view.settings().set("julia",True)
-        view.set_syntax_file("Packages/Sublime-IJulia/Syntax/Julia.tmLanguage")
+        view.set_syntax_file("Packages/IJulia/Syntax/Julia.tmLanguage")
         view.settings().set("julia_id", id)
         (group, index) = self._window.get_view_index(view)
         oldview = self._window.views_in_group(group)[max(0, index-1)]
