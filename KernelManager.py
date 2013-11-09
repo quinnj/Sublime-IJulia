@@ -13,6 +13,7 @@ class KernelManager(object):
             creationflags = 0x8000000 # CREATE_NO_WINDOW
         else:
             creationflags = 0
+        cmd = cmd + zmq_profile(id)
         print("cmd: %s" % cmd)
         self.kernel = subprocess.Popen(cmd, creationflags=creationflags)
         self.context = Context()

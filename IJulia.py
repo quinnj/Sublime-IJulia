@@ -1,6 +1,4 @@
-import os
-import sublime
-import sublime_plugin
+import os, sublime, sublime_plugin
 from . import KernelManager
 from .ZMQ import pkg_dir
 
@@ -22,10 +20,7 @@ class JuliaView(object):
             cmd = cmd["windows"]
         else:
             cmd = cmd["unix"]
-        self.cmd = cmd + " " + pkg_dir + "/IJulia/src/kernel.jl " + \
-                "C:/Users/karbarcca/profile-5924.json"
-                #sublime.packages_path() + "/Sublime-IJulia/profile-5924.json"
-                
+        self.cmd = cmd + " " + pkg_dir + "/IJulia/src/kernel.jl "
         sublime.set_timeout_async(self.start_kernel,0)        
         self._view = view
         self._output_end = view.size()

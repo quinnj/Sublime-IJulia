@@ -22,6 +22,21 @@ def zmq_error():
     er = zmq.zmq_strerror(err)
     return er[:].decode()
 
+def zmq_profile(id):
+    t = {"hb_port":5680,
+         "control_port":5679,
+         "stdin_port":5678,
+         "ip":"127.0.0.1",
+         "transport":"tcp",
+         "shell_port":5681,
+         "iopub_port":5682,
+         "key":""}
+    filename = pkg_dir + '/IJulia/profile-' + str(id) + '.json'
+    f = open(filename, 'w')
+    f.write(json.dumps(t))
+    f.close()
+    return filename
+
 PUB = 1
 SUB = 2
 REQ = 3
