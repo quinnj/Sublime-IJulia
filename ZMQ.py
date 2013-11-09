@@ -1,10 +1,7 @@
 from ctypes import *
 import json
-import os, sublime, sublime_plugin
+import os
 
-SETTINGS_FILE = 'Sublime-IJulia.sublime-settings'
-
-settings = sublime.load_settings(SETTINGS_FILE)
 pkg_dir = os.path.expanduser("~/.julia")
 zmq = cdll.LoadLibrary(pkg_dir + "/ZMQ/deps/usr/lib/libzmq")
 
