@@ -14,7 +14,7 @@ class KernelManager(object):
         else:
             creationflags = 0
         print("cmd: %s" % cmd)
-        self.kernel = subprocess.Popen(cmd, creationflags=creationflags)
+        self.kernel = subprocess.Popen(cmd, shell=True, creationflags=creationflags)
         ip = profile['transport'] + '://' + profile['ip'] + ':'
         self.context = Context()
         self.heartbeat = Socket(self.context, REQ)
@@ -55,6 +55,7 @@ class KernelManager(object):
              "session": str(uuid.uuid4()), 
              "msg_type": "shutdown_request"}, 
              {"restart": restart}, {})
+        print("just about to send shutdown_request")
         ret = self.shell.send(shutdown_request)
         #Next is getting the response back from the kernel, which can be
         #tricky if the kernel blocks, so we just know
@@ -74,24 +75,24 @@ class KernelManager(object):
         return self.heartbeat.recv_msg()
 
     def get_execute_reply(self):
-        m = self.sub.recv_block()
+        m = self.sub.recv()
         count = m.content['execution_count']
         data = m.content['data']['text/plain']
         return count, data
 
     def get_stdout(self):
-        m = self.sub.recv_block()
+        m = self.sub.recv()
         data = m.content['data']
         return data
 
     def get_error_reply(self):
-        m = self.sub.recv_block()
+        m = self.sub.recv()
         count = m.content['execution_count']
         data = m.content['evalue']
         return count, data  
 
     def get_status(self):
-        m = self.sub.recv_block()
+        m = self.sub.recv()
         return m.content['execution_state']   
 
 class RecvThread(threading.Thread):
@@ -161,6 +162,13 @@ class RecvThread(threading.Thread):
             if r:
                 l = 5
             else:
+                print("Heartbeat didn't get a response")
                 l -= 1
             if l == 0:
+                print("Kernel died, closing sockets....")
+                self.kernel.heartbeat.close()
+                self.kernel.sub.close()
+                self.kernel.shell.close()
+                print("Sockets closed...")
+                self.jv.kernel_died()
                 break

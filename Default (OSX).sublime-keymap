@@ -25,7 +25,14 @@
 			{ "key": "setting.julia", "operator": "equal", "operand": true }
 		]
 	},
-	{ "keys": ["enter"], "command": "julia_enter", "args": {},
+	{ "keys": ["enter"], "command": "i_julia_shift_enteria_enter", "args": {},
+	"context":
+		[
+			{ "key": "setting.julia", "operator": "equal", "operand": true },
+			{ "key": "auto_complete_visible", "operator": "equal", "operand": false }
+		]
+	},
+	{ "keys": ["shift+enter"], "command": "i_julia_shift_enter", "args": {},
 	"context":
 		[
 			{ "key": "setting.julia", "operator": "equal", "operand": true },

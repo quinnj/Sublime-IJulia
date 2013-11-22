@@ -3,7 +3,10 @@ import json
 import os
 
 pkg_dir = os.path.expanduser("~/.julia")
-zmq = cdll.LoadLibrary(pkg_dir + "/ZMQ/deps/usr/lib/libzmq")
+if os.name == "mac":
+    zmq = cdll.LoadLibrary("/usr/local/Cellar/zeromq/3.2.4/lib/libzmq")
+else:
+    zmq = cdll.LoadLibrary(pkg_dir + "/ZMQ/deps/usr/lib/libzmq")
 
 #Return types
 zmq.zmq_msg_data.restype = c_char_p
@@ -11,6 +14,7 @@ zmq.zmq_ctx_new.restype = c_void_p
 zmq.zmq_socket.restype = c_void_p
 zmq.zmq_setsockopt.restype = c_int
 zmq.zmq_connect.restype = c_int
+zmq.zmq_close.restype = c_int
 zmq.zmq_send.restype = c_int
 zmq.zmq_msg_recv.restype = c_int
 zmq.zmq_msg_size.restype = c_int
@@ -18,7 +22,6 @@ zmq.zmq_strerror.restype = c_char_p
 
 def zmq_error():
     err = zmq.zmq_errno()
-    print("errno: %i" % err)
     er = zmq.zmq_strerror(err)
     return er[:].decode()
 
@@ -58,6 +61,7 @@ class _Message(Structure):
 zmq.zmq_socket.argtypes = [c_void_p, c_int]
 zmq.zmq_setsockopt.argtypes = [c_void_p, c_int, c_void_p, c_int]
 zmq.zmq_connect.argtypes = [c_void_p, c_char_p]
+zmq.zmq_close.argtypes = [c_void_p]
 zmq.zmq_send.argtypes = [c_void_p, c_void_p, c_size_t, c_int]
 zmq.zmq_msg_init.argtypes = [POINTER(_Message)]
 zmq.zmq_msg_recv.argtypes = [POINTER(_Message), c_void_p, c_int]
@@ -93,20 +97,29 @@ class Context(object):
 class Socket(object):
     def __init__(self, context, sock_type):
         self.ptr = zmq.zmq_socket(context.ptr, sock_type)
+        self.alive = True
         context.sockets.append(self)
         if sock_type == SUB:
             zmq.zmq_setsockopt(self.ptr, 6, b'', 0)
+            zmq.zmq_setsockopt(self.ptr, 27, 1000, 0)
+        else:
+            zmq.zmq_setsockopt(self.ptr, 28, 100, 0)
 
     def connect(self, endpoint):
         ret = zmq.zmq_connect(self.ptr, endpoint.encode())
         if ret != 0:
             print(zmq_error())
 
+    def close(self):
+        zmq.zmq_close(self.ptr)
+        self.alive = False
+
     def send_msg(self, msg, flag=0):
-        ret = zmq.zmq_send(self.ptr, msg.encode(), len(msg), flag)
-        if ret == -1:
-            print(zmq_error())
-        return ret
+        if self.alive:
+            ret = zmq.zmq_send(self.ptr, msg.encode(), len(msg), flag)
+            return ret
+        else:
+            return 0
 
     def send(self, m):
         self.send_msg(m.idents[0], SNDMORE)
@@ -123,11 +136,15 @@ class Socket(object):
         self.send_msg(content)
 
     def recv_msg(self):
-        m = Message()
-        zmq.zmq_msg_recv(byref(m.msg),self.ptr,NOBLOCK)
-        data = zmq.zmq_msg_data(byref(m.msg))
-        length = zmq.zmq_msg_size(byref(m.msg))
-        return data[:length].decode()
+        if self.alive:
+            m = Message()
+            #what's the return for zmq_msg_recv? is there where we're blocking?
+            zmq.zmq_msg_recv(byref(m.msg),self.ptr,NOBLOCK)
+            data = zmq.zmq_msg_data(byref(m.msg))
+            length = zmq.zmq_msg_size(byref(m.msg))
+            return data[:length].decode()
+        else:
+            return ''
 
     def recv(self):
         msg = self.recv_msg()        

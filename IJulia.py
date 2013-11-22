@@ -4,7 +4,53 @@ from .ZMQ import pkg_dir, zmq_profile
 
 SETTINGS_FILE = 'Sublime-IJulia.sublime-settings'
 
-class JuliaView(object):
+class IJuliaManager(object):
+    def __init__(self):
+        self.julia_views = []
+        self.text_transfer = ""
+        self.cmdhist = [""]
+
+    #where can this be called from?
+    def julia_view(self, view):
+        julia_id = view.settings().get("julia_id")
+        try:        
+            jv = self.julia_views[julia_id]
+        except:
+            return None
+        jv.update_view(view) #what does this do
+        return jv
+
+    def open(self, window):
+        id = len(self.julia_views)
+        view = window.new_file()
+        jv = IJuliaView(view, id)
+        self.julia_views.append(jv)
+        view.set_scratch(True)
+        view.set_name("*IJulia %d*" % id)
+        return jv        
+
+    def restart(self, jv, edit):
+        jv.on_close()
+        id = len(self.julia_views)
+        jv = IJuliaView(jv._view, id)
+        self.julia_views.append(jv)
+        view.set_scratch(True)
+        view.set_name("*IJulia %d*" % id)
+        return True
+
+    def remove_ijulia_view(self, julia_view):
+        julia_id = julia_view.id
+        try:
+            del self.julia_views[julia_id]
+        except:
+            return None
+        for i in range(0,len(self.julia_views)):
+            self.julia_views[i]._view.settings().set("julia_id", i)
+            self.julia_views[i]._view.set_name("IJulia %d*" % i)
+
+manager = IJuliaManager()
+
+class IJuliaView(object):
     def start_kernel(self):
         print("starting kernel...")
         self.kernel = KernelManager.KernelManager(self.cmd, self.id, self.profile)
@@ -16,19 +62,19 @@ class JuliaView(object):
         self.id = id
         settings = sublime.load_settings(SETTINGS_FILE)
         cmd = settings.get("julia_command")
+        filename = "\"" + sublime.packages_path() + '/IJulia/profile-' + str(id) + '.json\"'
         if os.name == 'nt':
             cmd = cmd["windows"]
+            self.cmd = cmd + " " + pkg_dir + "/IJulia/src/kernel.jl " + filename
         else:
             cmd = cmd["unix"]
-        filename = "\"" + sublime.packages_path() + '/IJulia/profile-' + str(id) + '.json\"'
-        self.cmd = cmd + " " + pkg_dir + "/IJulia/src/kernel.jl " + filename
+            self.cmd = [cmd, pkg_dir + "/IJulia/src/kernel.jl " + filename]
         self.profile = zmq_profile(filename, id)
-        sublime.set_timeout_async(self.start_kernel,0)        
+        sublime.set_timeout_async(self.start_kernel,0)
         self._view = view
         self._output_end = view.size()
         self._window = view.window()
         self.cmdstate = -1
-        self.banner = 1
         self.in_count = 1
         view.settings().set("julia",True)
         view.set_syntax_file("Packages/IJulia/Syntax/Julia.tmLanguage")
@@ -40,20 +86,11 @@ class JuliaView(object):
         self._window.focus_view(view)
 
     def shift_enter(self, edit):
-        self._view.run_command("julia_insert_text", {"pos": self._view.size(), "text": '\n\t\t '})
+        self.write('\n\t\t ',False)
 
     def on_backspace(self):
         if self.delta < 0:
             self._view.run_command("left_delete")
-
-    def on_ctrl_backspace(self):
-        if self.delta < 0:
-            self._view.run_command("delete_word", {"forward": False, "sub_words": True})
-
-    def on_super_backspace(self):
-        if self.delta < 0:
-            for i in range(abs(self.delta)):
-                self._view.run_command("left_delete")  # Hack to delete to BOL
 
     def on_left(self):
         if self.delta != 0:
@@ -81,13 +118,15 @@ class JuliaView(object):
         self._view.set_read_only(self.delta > 0)
 
     def on_close(self):
-        self.kernel.shutdown(False)
-        manager._delete_repl(self)
+        self.kernel.kernel.poll()
+        if self.kernel.kernel.returncode == None:
+            self.kernel.shutdown(False)
+        manager.remove_ijulia_view(self)
 
-    def clear(self, edit):
-        self.escape(edit)
-        self._view.erase(edit, self.output_region)
-        self._output_end = self._view.sel()[0].begin()
+    def kernel_died(self):
+        self.write("\n***Kernel Died***\n",True)
+        self._view.set_read_only(True)
+        manager.remove_ijulia_view(self)        
 
     def escape(self, edit):
         self._view.set_read_only(False)
@@ -110,7 +149,7 @@ class JuliaView(object):
         if self.cmdstate < len(manager.cmdhist)-1:
             self.cmdstate += 1
         text = manager.cmdhist[self.cmdstate]
-        self._view.run_command("julia_insert_text", {"pos": self._output_end, "text": text})
+        self.write(text,False)
         self._view.show(self.input_region)
 
     def next_command(self, edit):
@@ -124,12 +163,13 @@ class JuliaView(object):
         else:
             text = manager.cmdhist[self.cmdstate-1]
         self.cmdstate -= 1
-        self._view.run_command("julia_insert_text", {"pos": self._output_end, "text": text})
+        self.write(text,False)
         self._view.show(self.input_region)
 
-    def write(self, unistr):
-        self._view.run_command("julia_insert_text", {"pos": self._output_end, "text": unistr})
-        self._output_end += len(unistr) 
+    def write(self, unistr, extend):
+        self._view.run_command("i_julia_insert_text", {"pos": self._output_end, "text": unistr})
+        if extend:
+            self._output_end += len(unistr) 
 
     def enter(self, edit):
         v = self._view
@@ -150,16 +190,16 @@ class JuliaView(object):
 
     def stdout_output(self, data):
         if data != '\n':
-            self.write(data.replace('\r\n','\n'))
+            self.write(data.replace('\r\n','\n'),True)
             self._output_end = self._view.size()
 
     def in_output(self):
-        self.write("\nIn  [{:d}]: ".format(self.in_count))
+        self.write("\nIn  [{:d}]: ".format(self.in_count),True)
         self.reader.startup = 0
         self.in_count += 1
 
     def output(self, count, data):
-        self.write("\nOut [{:d}]: {!s}".format(self.in_count-1, data))
+        self.write("\nOut [{:d}]: {!s}".format(self.in_count-1, data),True)
         self._view.run_command("insert", {"characters": '\n'})
         self._output_end = self._view.size()
 
@@ -192,69 +232,22 @@ class JuliaView(object):
                 return False
         return True
 
-
-class IJuliaManager(object):
-    def __init__(self):
-        self.julia_views = {}
-        self.text_transfer = ""
-        self.cmdhist = ['']
-
-    def julia_view(self, view):
-        julia_id = view.settings().get("julia_id")
-        if julia_id not in self.julia_views:
-            return None
-        jv = self.julia_views[julia_id]
-        jv.update_view(view)
-        return jv
-
-    def open(self, window):
-        id = len(self.julia_views)
-        found = None
-        for view in window.views():
-            if view.settings().get("julia_id") == id:
-                found = view
-                break
-        view = found or window.new_file()
-        jv = JuliaView(view, id)
-        self.julia_views[id] = jv
-        view.set_scratch(True)
-        view.set_name("*IJulia %d*" % id)
-        return jv        
-
-    def restart(self, view, edit):
-        # need to shift other views down in id
-        jv = self.julia_view(view)
-        if jv:
-            jv.on_close()
-        view.run_command("insert", {"characters": '                         '})
-        self.open(view.window())
-        for i in range(0,25):
-           view.run_command("left_delete")
-        return True
-
-    def _delete_repl(self, julia_view):
-        julia_id = julia_view.juliarepl.id
-        if julia_id not in self.julia_views:
-            return None
-        del self.julia_views[julia_id]
-
-
-manager = IJuliaManager()
-
 # Window Commands #########################################
 # Opens a new REPL
 class IJuliaOpenCommand(sublime_plugin.WindowCommand):
     def run(self):
         manager.open(self.window)
 
-class JuliaRestartCommand(sublime_plugin.TextCommand):
+class IJuliaRestartCommand(sublime_plugin.TextCommand):
     def run(self, edit):
-        manager.restart(self.view, edit)
+        rv = manager.julia_view(self.view)
+        if rv:
+            manager.restart(rv, edit)
 
     def is_enabled(self):
         return self.is_visible()
 
-class JuliaTransferCurrent(sublime_plugin.TextCommand):
+class IJuliaTransferCurrent(sublime_plugin.TextCommand):
     def run(self, edit, scope="selection"):
         text = ""
         if scope == "selection":
@@ -265,29 +258,29 @@ class JuliaTransferCurrent(sublime_plugin.TextCommand):
             text = self.selected_file()
         
         mg = manager
-        mg.text_transfer = text
-        mg.edit_chunk = edit
         jvs = mg.julia_views
         if len(jvs) == 0:
             jv = mg.open(self.view.window())
-            jv._view.run_command("julia_insert_text", {"pos": jv._output_end, "text": text})
+            #need to wait to write text until after banner is displayed
+            jv.write(text,False)
             jv.enter(edit)
         elif len(jvs) > 1:
+            mg.text_transfer = text
             panel_list = []
             for v in jvs:
-                panel_list.append(jvs[v]._view.name())
+                panel_list.append(v._view.name())
             self.view.window().show_quick_panel(panel_list, self.choose_julia,sublime.MONOSPACE_FONT)
         else:
             jv = jvs[0]
-            jv._view.run_command("julia_insert_text", {"pos": jv._output_end, "text": text})
+            jv.write(text,False)
             jv.enter(edit)
 
     def choose_julia(edi,num):
             if num == -1:
                 return
             jv = manager.julia_views[num]
-            jv._view.run_command("julia_insert_text", {"pos": jv._output_end, "text": manager.text_transfer})
-            jv._view.run_command("julia_enter", {})
+            jv.write(manager.text_transfer,False)
+            jv._view.run_command("i_julia_enter", {})
 
     def selected_text(self):
         v = self.view
@@ -307,22 +300,16 @@ class JuliaTransferCurrent(sublime_plugin.TextCommand):
         return v.substr(sublime.Region(0, v.size()))
 
 
-# REPL Comands ############################################
-class JuliaInsertTextCommand(sublime_plugin.TextCommand):
+# IJulia Comands ############################################
+class IJuliaInsertTextCommand(sublime_plugin.TextCommand):
     def run(self, edit, pos, text):
-        self.view.set_read_only(False)  # make sure view is writable
+        self.view.set_read_only(False)
         self.view.insert(edit, int(pos), text)
 
-
-class JuliaEraseTextCommand(sublime_plugin.TextCommand):
+class IJuliaEraseTextCommand(sublime_plugin.TextCommand):
     def run(self, edit, start, end):
-        self.view.set_read_only(False)  # make sure view is writable
+        self.view.set_read_only(False)
         self.view.erase(edit, sublime.Region(int(start), int(end)))
-
-
-class JuliaPass(sublime_plugin.TextCommand):
-    def run(self, edit):
-        pass
 
 # Submits the Command to the REPL
 class IJuliaEnterCommand(sublime_plugin.TextCommand):
@@ -337,98 +324,56 @@ class IJuliaShiftEnterCommand(sublime_plugin.TextCommand):
         if rv:
             rv.shift_enter(edit)
 
-class JuliaClearCommand(sublime_plugin.TextCommand):
-    def run(self, edit):
-        rv = manager.julia_view(self.view)
-        if rv:
-            rv.clear(edit)
-
-# Resets Julia Command Line
-class JuliaEscapeCommand(sublime_plugin.TextCommand):
+class IJuliaEscapeCommand(sublime_plugin.TextCommand):
     def run(self, edit):
         rv = manager.julia_view(self.view)
         if rv:
             rv.escape(edit)
 
-
-class JuliaBackspaceCommand(sublime_plugin.TextCommand):
+class IJuliaBackspaceCommand(sublime_plugin.TextCommand):
     def run(self, edit):
         rv = manager.julia_view(self.view)
         if rv:
             rv.on_backspace()
 
-
-class JuliaCtrlBackspaceCommand(sublime_plugin.TextCommand):
-    def run(self, edit):
-        rv = manager.julia_view(self.view)
-        if rv:
-            rv.on_ctrl_backspace()
-
-
-class JuliaSuperBackspaceCommand(sublime_plugin.TextCommand):
-    def run(self, edit):
-        rv = manager.julia_view(self.view)
-        if rv:
-            rv.on_super_backspace()
-
-
-class JuliaLeftCommand(sublime_plugin.TextCommand):
+class IJuliaLeftCommand(sublime_plugin.TextCommand):
     def run(self, edit):
         rv = manager.julia_view(self.view)
         if rv:
             rv.on_left()
 
-
-class JuliaShiftLeftCommand(sublime_plugin.TextCommand):
+class IJuliaShiftLeftCommand(sublime_plugin.TextCommand):
     def run(self, edit):
         rv = manager.julia_view(self.view)
         if rv:
             rv.on_shift_left()
 
 
-class JuliaHomeCommand(sublime_plugin.TextCommand):
+class IJuliaHomeCommand(sublime_plugin.TextCommand):
     def run(self, edit):
         rv = manager.julia_view(self.view)
         if rv:
             rv.on_home()
 
-
-class JuliaShiftHomeCommand(sublime_plugin.TextCommand):
+class IJuliaShiftHomeCommand(sublime_plugin.TextCommand):
     def run(self, edit):
         rv = manager.julia_view(self.view)
         if rv:
             rv.on_shift_home()
 
-
-class JuliaViewPreviousCommand(sublime_plugin.TextCommand):
+class IJuliaViewPreviousCommand(sublime_plugin.TextCommand):
     def run(self, edit):
         rv = manager.julia_view(self.view)
         if rv:
             rv.previous_command(edit)
 
-
-class JuliaViewNextCommand(sublime_plugin.TextCommand):
+class IJuliaViewNextCommand(sublime_plugin.TextCommand):
     def run(self, edit):
         rv = manager.julia_view(self.view)
         if rv:
             rv.next_command(edit)
 
-
-class JuliaKillCommand(sublime_plugin.TextCommand):
-    def run(self, edit):
-        rv = manager.julia_view(self.view)
-        if rv:
-            rv.juliarepl.kill()
-
-    def is_visible(self):
-        rv = manager.julia_view(self.view)
-        return bool(rv)
-
-    def is_enabled(self):
-        return self.is_visible()
-
-
-class SublimeReplListener(sublime_plugin.EventListener):
+class IJuliaListener(sublime_plugin.EventListener):
     def on_selection_modified(self, view):
         rv = manager.julia_view(view)
         if rv:
@@ -437,7 +382,7 @@ class SublimeReplListener(sublime_plugin.EventListener):
     def on_close(self, view):
         rv = manager.julia_view(view)
         if rv:
-            rv.on_close()
+            rv.on_close()    
 
     def on_text_command(self, view, command_name, args):
         rv = manager.julia_view(view)
@@ -447,60 +392,10 @@ class SublimeReplListener(sublime_plugin.EventListener):
         if command_name == 'insert':
             # with "auto_complete_commit_on_tab": true enter does
             # not work when autocomplete is displayed, this fixes
-            # it by replacing insert \n with repl_enter
+            # it by replacing insert \n with i_julia_enter
             if args.get('characters') == '\n':
                 view.run_command('hide_auto_complete')
-                return 'julia_enter', {}
+                return 'i_julia_enter', {}
             return None
 
-        if command_name == 'left_delete':
-            # stop backspace on ST3 w/o breaking brackets
-            if not rv.allow_deletion():
-                return 'julia_pass', {}
-
-        if command_name == 'delete_word' and not args.get('forward'):
-            # stop ctrl+backspace on ST3 w/o breaking brackets
-            if not rv.allow_deletion():
-                return 'julia_pass', {}
-
         return None
-
-class SubprocessReplSendSignal(sublime_plugin.TextCommand):
-    def run(self, edit, signal=None):
-        rv = manager.julia_view(self.view)
-        subrepl = rv.juliarepl
-        signals = subrepl.available_signals()
-        sorted_names = sorted(signals.keys())
-        if signal in signals:
-            #signal given by name
-            self.safe_send_signal(subrepl, signals[signal])
-            return
-        if signal in list(signals.values()):
-            #signal given by code (correct one!)
-            self.safe_send_signal(subrepl, signal)
-            return
-
-        # no or incorrect signal given
-        def signal_selected(num):
-            if num == -1:
-                return
-            signame = sorted_names[num]
-            sigcode = signals[signame]
-            self.safe_send_signal(subrepl, sigcode)
-        self.view.window().show_quick_panel(sorted_names, signal_selected)
-
-    def safe_send_signal(self, subrepl, sigcode):
-        try:
-            subrepl.send_signal(sigcode)
-        except Exception as e:
-            sublime.error_message(str(e))
-
-    def is_visible(self):
-        rv = manager.julia_view(self.view)
-        return bool(rv) and hasattr(rv.juliarepl, "send_signal")
-
-    def is_enabled(self):
-        return self.is_visible()
-
-    def description(self):
-        return "Send SIGNAL"
