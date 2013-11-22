@@ -1,4 +1,4 @@
 {
-    "cmd": ["julia.bat", "$file"],
+    "cmd": ["julia", "$file"],
     "selector": "source.julia"
 }
