@@ -76,6 +76,7 @@ class IJuliaView(object):
         self._window = view.window()
         self.cmdstate = -1
         self.in_count = 1
+        self.stdout_pos = 0
         view.settings().set("julia",True)
         view.set_syntax_file("Packages/IJulia/Syntax/Julia.tmLanguage")
         view.settings().set("julia_id", id)
@@ -124,7 +125,7 @@ class IJuliaView(object):
         manager.remove_ijulia_view(self)
 
     def kernel_died(self):
-        self.write("\n***Kernel Died***\n",True)
+        self.write("\n\n***Kernel Died***\n",True)
         self._view.set_read_only(True)
         manager.remove_ijulia_view(self)        
 
@@ -179,6 +180,7 @@ class IJuliaView(object):
         v.run_command("insert", {"characters": '\n'})
         command = self.user_input
         self._output_end += len(command)
+        self.stdout_pos = self._output_end
         manager.cmdhist.insert(0,command[:-1])
         manager.cmdhist = list(self.unique(manager.cmdhist))
         self.cmdstate = -1
@@ -189,14 +191,16 @@ class IJuliaView(object):
         self.kernel.execute(self.command)
 
     def stdout_output(self, data):
-        if data != '\n':
-            self.write(data.replace('\r\n','\n'),True)
-            self._output_end = self._view.size()
+        data = data.replace('\r\n','\n')
+        self._view.run_command("i_julia_insert_text", 
+            {"pos": self.stdout_pos, "text": data})
+        self._output_end += len(data)
+        self.stdout_pos = self._output_end
 
     def in_output(self):
         self.write("\nIn  [{:d}]: ".format(self.in_count),True)
-        self.reader.startup = 0
         self.in_count += 1
+        self.reader.startup = 0
 
     def output(self, count, data):
         self.write("\nOut [{:d}]: {!s}".format(self.in_count-1, data),True)
