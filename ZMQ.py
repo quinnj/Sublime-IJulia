@@ -1,12 +1,14 @@
 from ctypes import *
 import json
-import os
+import os, sys
 
 pkg_dir = os.path.expanduser("~/.julia")
-if os.name == "mac":
+if sys.platform == 'win32':
+    zmq = cdll.LoadLibrary(pkg_dir + "/ZMQ/deps/usr/lib/libzmq")
+elif sys.platform == 'darwin':
     zmq = cdll.LoadLibrary("/usr/local/Cellar/zeromq/3.2.4/lib/libzmq")
 else:
-    zmq = cdll.LoadLibrary(pkg_dir + "/ZMQ/deps/usr/lib/libzmq")
+    zmq = cdll.LoadLibrary(pkg_dir + "/ZMQ/deps/usr/lib/libzmq.so.3.0.0")
 
 #Return types
 zmq.zmq_msg_data.restype = c_char_p
