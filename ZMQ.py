@@ -6,7 +6,7 @@ pkg_dir = os.path.expanduser("~/.julia")
 if sublime.platform() == 'windows':
     zmq = cdll.LoadLibrary(pkg_dir + "/ZMQ/deps/usr/lib/libzmq")
 elif sublime.platform() == 'osx':
-    zmq = cdll.LoadLibrary("libzmq")
+    zmq = cdll.LoadLibrary("/usr/local/Cellar/zeromq/3.2.4/lib/libzmq.dylib")
 else:
     zmq = cdll.LoadLibrary(pkg_dir + "/ZMQ/deps/usr/lib/libzmq.so.3.0.0")
 
