@@ -1,5 +1,6 @@
 [
-    { "caption": "Sublime-IJulia: Open New REPL", "command": "i_julia_open"},
+    { "caption": "Sublime-IJulia: Open New IJulia Console", "command": "i_julia_open"},
+    { "caption": "Apply Julia Syntax to .jl Files", "command": "julia_syntax"},
     { "caption": "Sublime-IJulia: Enter", "command": "i_julia_enter"},
     { "caption": "Sublime-IJulia: Receive", "command": "i_julia_receive"},
     { "caption": "Sublime-IJulia: Evaluate Selection", "command": "julia_transfer_current", "args": {"scope": "selection"}},
