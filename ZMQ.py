@@ -1,12 +1,12 @@
 from ctypes import *
 import json
-import os, sys
+import os, sublime, sublime_plugin
 
 pkg_dir = os.path.expanduser("~/.julia")
-if sys.platform == 'win32':
+if sublime.platform() == 'windows':
     zmq = cdll.LoadLibrary(pkg_dir + "/ZMQ/deps/usr/lib/libzmq")
-elif sys.platform == 'darwin':
-    zmq = cdll.LoadLibrary("/usr/local/Cellar/zeromq/3.2.4/lib/libzmq")
+elif sublime.platform() == 'osx':
+    zmq = cdll.LoadLibrary("libzmq")
 else:
     zmq = cdll.LoadLibrary(pkg_dir + "/ZMQ/deps/usr/lib/libzmq.so.3.0.0")
 
