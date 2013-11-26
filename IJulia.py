@@ -62,13 +62,12 @@ class IJuliaView(object):
         self.id = id
         settings = sublime.load_settings(SETTINGS_FILE)
         cmd = settings.get("julia_command")
-        filename = "\"" + sublime.packages_path() + '/IJulia/profile-' + str(id) + '.json\"'
-        if os.name == 'nt':
+        if sublime.platform() == 'windows':
             cmd = cmd["windows"]
-            self.cmd = cmd + " " + pkg_dir + "/IJulia/src/kernel.jl " + filename
         else:
             cmd = cmd["unix"]
-            self.cmd = [cmd, pkg_dir + "/IJulia/src/kernel.jl " + filename]
+        filename = "\"" + sublime.packages_path() + '/User/profile-' + str(id) + '.json\"'
+        self.cmd = cmd + " " + pkg_dir + "/IJulia/src/kernel.jl " + filename
         self.profile = zmq_profile(filename, id)
         sublime.set_timeout_async(self.start_kernel,0)
         self._view = view

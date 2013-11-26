@@ -6,6 +6,9 @@ import subprocess
 import threading
 import time
 
+def plugin_loaded():
+    print("hey")
+
 class KernelManager(object):
     def __init__(self, cmd, id, profile):
         self.id = id
