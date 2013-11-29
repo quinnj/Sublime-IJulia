@@ -86,7 +86,8 @@ class IJuliaView(object):
         self._window.focus_view(view)
 
     def shift_enter(self, edit):
-        self.write('\n\t\t ',False)
+        self._view.run_command("i_julia_insert_text", 
+            {"pos": self._view.size(), "text": '\n\t\t '})
 
     def on_backspace(self):
         if self.delta < 0:
@@ -190,11 +191,12 @@ class IJuliaView(object):
         self.kernel.execute(self.command)
 
     def stdout_output(self, data):
-        data = data.replace('\r\n','\n')
-        self._view.run_command("i_julia_insert_text", 
-            {"pos": self.stdout_pos, "text": data})
-        self._output_end += len(data)
-        self.stdout_pos = self._output_end
+        if data not in ('\r\n','\n'):
+            data = data.replace('\r\n','\n')
+            self._view.run_command("i_julia_insert_text", 
+                {"pos": self.stdout_pos, "text": data})
+            self._output_end += len(data)
+            self.stdout_pos = self._output_end
 
     def in_output(self):
         self.write("\nIn  [{:d}]: ".format(self.in_count),True)
@@ -202,8 +204,8 @@ class IJuliaView(object):
         self.reader.startup = 0
 
     def output(self, count, data):
-        self.write("\nOut [{:d}]: {!s}".format(self.in_count-1, data),True)
-        self._view.run_command("insert", {"characters": '\n'})
+        out = "\nOut [{:d}]: {!s}\n".format(self.in_count-1, data)
+        self.write(out,True)
         self._output_end = self._view.size()
 
     @property

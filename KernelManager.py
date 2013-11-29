@@ -1,5 +1,4 @@
 from .ZMQ import *
-#from ZMQ_test import *
 import uuid
 import os
 import subprocess
