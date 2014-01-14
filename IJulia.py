@@ -1,6 +1,5 @@
 import os, sublime, sublime_plugin
 from . import KernelManager
-from .ZMQ import pkg_dir, zmq_profile
 
 SETTINGS_FILE = 'Sublime-IJulia.sublime-settings'
 
@@ -67,8 +66,8 @@ class IJuliaView(object):
         else:
             cmd = cmd["unix"]
         filename = "\"" + sublime.packages_path() + '/User/profile-' + str(id) + '.json\"'
-        self.cmd = cmd + " " + pkg_dir + "/IJulia/src/kernel.jl " + filename
-        self.profile = zmq_profile(filename, id)
+        self.cmd = cmd + " " + os.path.expanduser("~/.julia/IJulia/src/kernel.jl ") + filename
+        self.profile = KernelManager.zmq_profile(filename, id)
         sublime.set_timeout_async(self.start_kernel,0)
         self._view = view
         self._output_end = view.size()
@@ -177,11 +176,11 @@ class IJuliaView(object):
         if v.sel()[0].begin() != v.size():
             v.sel().clear()
             v.sel().add(sublime.Region(v.size()))
-        v.run_command("insert", {"characters": '\n'})
         command = self.user_input
+        v.run_command("insert", {"characters": '\n'})
         self._output_end += len(command)
         self.stdout_pos = self._output_end
-        manager.cmdhist.insert(0,command[:-1])
+        manager.cmdhist.insert(0,command)
         manager.cmdhist = list(self.unique(manager.cmdhist))
         self.cmdstate = -1
         self.command = command
@@ -191,12 +190,11 @@ class IJuliaView(object):
         self.kernel.execute(self.command)
 
     def stdout_output(self, data):
-        if data not in ('\r\n','\n'):
-            data = data.replace('\r\n','\n')
-            self._view.run_command("i_julia_insert_text", 
-                {"pos": self.stdout_pos, "text": data})
-            self._output_end += len(data)
-            self.stdout_pos = self._output_end
+        data = data.replace('\r\n','\n')
+        self._view.run_command("i_julia_insert_text", 
+            {"pos": self.stdout_pos, "text": data})
+        self._output_end += len(data)
+        self.stdout_pos = self._output_end
 
     def in_output(self):
         self.write("\nIn  [{:d}]: ".format(self.in_count),True)
@@ -378,6 +376,10 @@ class IJuliaViewNextCommand(sublime_plugin.TextCommand):
         if rv:
             rv.next_command(edit)
 
+class JuliaPass(sublime_plugin.TextCommand):
+    def run(self, edit):
+        pass
+
 class IJuliaListener(sublime_plugin.EventListener):
     def on_selection_modified(self, view):
         rv = manager.julia_view(view)
@@ -394,13 +396,14 @@ class IJuliaListener(sublime_plugin.EventListener):
         if not rv:
             return None
 
-        if command_name == 'insert':
-            # with "auto_complete_commit_on_tab": true enter does
-            # not work when autocomplete is displayed, this fixes
-            # it by replacing insert \n with i_julia_enter
-            if args.get('characters') == '\n':
-                view.run_command('hide_auto_complete')
-                return 'i_julia_enter', {}
-            return None
+        if command_name == 'left_delete':
+            # stop backspace on ST3 w/o breaking brackets
+            if not rv.allow_deletion():
+                return 'julia_pass', {}
+
+        if command_name == 'delete_word' and not args.get('forward'):
+            # stop ctrl+backspace on ST3 w/o breaking brackets
+            if not rv.allow_deletion():
+                return 'julia_pass', {}
 
         return None

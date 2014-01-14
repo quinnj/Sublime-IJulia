@@ -8,5 +8,16 @@
 	"julia_command": {
 		"unix": "julia",
 		"windows": "julia.bat"
-		}
+		},
+	// "zmq_shared_library" refers to the absolute path of the ZMQ
+	// shared library file. This file is automatically downloaded/built
+	// with the installation of the IJulia package from within julia.
+	// The file is located in a standard location on windows and linux (usually)
+	// but is different on OSX through the homebrew installation.
+	// The name of the file to locate is "libzmq.dylib"
+	"zmq_shared_library": {
+		"linux": "~/.julia/ZMQ/deps/usr/lib/libzmq",
+		"osx": "/usr/local/Cellar/zeromq/3.2.4/lib/libzmq.dylib",
+		"windows": "~/.julia/ZMQ/deps/usr/lib/libzmq"
+	}
 }
