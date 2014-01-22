@@ -16,7 +16,7 @@
 	// but is different on OSX through the homebrew installation.
 	// The name of the file to locate is "libzmq.dylib"
 	"zmq_shared_library": {
-		"linux": "~/.julia/ZMQ/deps/usr/lib/libzmq",
+		"linux": "~/.julia/ZMQ/deps/usr/lib/libzmq.so",
 		"osx": "/usr/local/Cellar/zeromq/3.2.4/lib/libzmq.dylib",
 		"windows": "~/.julia/ZMQ/deps/usr/lib/libzmq"
 	}
