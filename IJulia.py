@@ -163,9 +163,7 @@ class IJuliaView(object):
     def write(self, unistr, extend):
         self._view.run_command("i_julia_insert_text", {"pos": self._output_end, "text": unistr})
         if extend:
-            self.debug("before_write")
             self._output_end += len(unistr)
-            self.debug("after_write")
 
     def debug(self,func):
         print("%s: _output_end: %s" % (func,self._output_end))
@@ -175,11 +173,10 @@ class IJuliaView(object):
         if v.sel()[0].begin() != v.size():
             v.sel().clear()
             v.sel().add(sublime.Region(v.size()))
+        v.run_command("i_julia_insert_text", {"pos": v.sel()[0].begin(), "text": '\n'})
         command = self.user_input
         #v.run_command("insert", {"characters": '\n'})
-        self.debug("before_enter")
         self._output_end += len(command)
-        self.debug("after_enter")
         self.stdout_pos = self._output_end
         manager.cmdhist.insert(0,command[:-1])
         manager.cmdhist = list(self.unique(manager.cmdhist))
@@ -194,18 +191,14 @@ class IJuliaView(object):
         data = data.replace('\r\n','\n')
         self._view.run_command("i_julia_insert_text", 
             {"pos": self.stdout_pos, "text": data})
-        self.debug("before_stdout_output")
         self._output_end += len(data)
-        self.debug("after_stdout_output")
         self.stdout_pos = self._output_end
 
     def in_output(self):
         self.write("\nIn  [{:d}]: ".format(self.in_count),True)
         self.in_count += 1
         self.reader.startup = 0
-        self.debug("before_in_output")
         self._output_end = self._view.size()
-        self.debug("after_in_output")
 
     def output(self, count, data):
         out = "\nOut [{:d}]: {!s}\n".format(self.in_count-1, data)
