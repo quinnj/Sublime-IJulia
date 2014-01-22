@@ -1,7 +1,7 @@
 import uuid, os, subprocess, threading, time, json
 from ctypes import *
 from subprocess import Popen
-debug = 1
+debug = 0
 if not debug:
     import sublime, sublime_plugin
 
