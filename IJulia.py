@@ -75,12 +75,16 @@ class IJuliaView(object):
         self._window.focus_view(view)
 
     def shift_enter(self, edit):
-        self._view.run_command("i_julia_insert_text", 
-            {"pos": self._view.size(), "text": '\n\t\t '})
+        if self.delta < 0:
+            self._view.run_command("i_julia_insert_text", 
+                {"pos": self._view.size(), "text": '\n'})
 
     def on_backspace(self):
         if self.delta < 0:
-            self._view.run_command("left_delete")
+            if self._view.command_history(0)[0] == 'insert_snippet':
+                self._view.run_command("run_macro_file",{"file": "res://Packages/Default/Delete Left Right.sublime-macro"})
+            else:
+                self._view.run_command("left_delete")
 
     def on_left(self):
         if self.delta != 0:
@@ -159,16 +163,23 @@ class IJuliaView(object):
     def write(self, unistr, extend):
         self._view.run_command("i_julia_insert_text", {"pos": self._output_end, "text": unistr})
         if extend:
-            self._output_end += len(unistr) 
+            self.debug("before_write")
+            self._output_end += len(unistr)
+            self.debug("after_write")
+
+    def debug(self,func):
+        print("%s: _output_end: %s" % (func,self._output_end))
 
     def enter(self, edit):
         v = self._view
         if v.sel()[0].begin() != v.size():
             v.sel().clear()
             v.sel().add(sublime.Region(v.size()))
-        v.run_command("insert", {"characters": '\n'})
         command = self.user_input
+        #v.run_command("insert", {"characters": '\n'})
+        self.debug("before_enter")
         self._output_end += len(command)
+        self.debug("after_enter")
         self.stdout_pos = self._output_end
         manager.cmdhist.insert(0,command[:-1])
         manager.cmdhist = list(self.unique(manager.cmdhist))
@@ -183,18 +194,22 @@ class IJuliaView(object):
         data = data.replace('\r\n','\n')
         self._view.run_command("i_julia_insert_text", 
             {"pos": self.stdout_pos, "text": data})
+        self.debug("before_stdout_output")
         self._output_end += len(data)
+        self.debug("after_stdout_output")
         self.stdout_pos = self._output_end
 
     def in_output(self):
         self.write("\nIn  [{:d}]: ".format(self.in_count),True)
         self.in_count += 1
         self.reader.startup = 0
+        self.debug("before_in_output")
+        self._output_end = self._view.size()
+        self.debug("after_in_output")
 
     def output(self, count, data):
         out = "\nOut [{:d}]: {!s}\n".format(self.in_count-1, data)
         self.write(out,True)
-        self._output_end = self._view.size()
 
     @property
     def input_region(self):
@@ -217,11 +232,11 @@ class IJuliaView(object):
             self._view = view
 
     def allow_deletion(self):
-        _output_end = self._output_end
+        o = self._output_end
         for sel in self._view.sel():
-            if sel.begin() == sel.end() and sel.begin() == _output_end:
+            if sel.begin() == sel.end() and sel.begin() == o:
                 return False
-            if sel.begin() < _output_end or sel.end() < _output_end:
+            if sel.begin() < o or sel.end() < o:
                 return False
         return True
 
@@ -373,8 +388,8 @@ class JuliaPass(sublime_plugin.TextCommand):
 class IJuliaListener(sublime_plugin.EventListener):
     def on_selection_modified(self, view):
         rv = manager.julia_view(view)
-        if rv:
-            rv.on_selection_modified()
+        # if rv:
+        #     rv.on_selection_modified()
 
     def on_close(self, view):
         rv = manager.julia_view(view)
@@ -386,14 +401,14 @@ class IJuliaListener(sublime_plugin.EventListener):
         if not rv:
             return None
 
-        if command_name == 'left_delete':
-            # stop backspace on ST3 w/o breaking brackets
-            if not rv.allow_deletion():
-                return 'julia_pass', {}
+        # if command_name == 'left_delete':
+        #     # stop backspace on ST3 w/o breaking brackets
+        #     if not rv.allow_deletion():
+        #         return 'julia_pass', {}
 
-        if command_name == 'delete_word' and not args.get('forward'):
-            # stop ctrl+backspace on ST3 w/o breaking brackets
-            if not rv.allow_deletion():
-                return 'julia_pass', {}
+        # if command_name == 'delete_word' and not args.get('forward'):
+        #     # stop ctrl+backspace on ST3 w/o breaking brackets
+        #     if not rv.allow_deletion():
+        #         return 'julia_pass', {}
 
         return None
