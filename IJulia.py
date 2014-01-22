@@ -109,7 +109,7 @@ class IJuliaView(object):
                 self._window.run_command("move", {"by": "characters", "forward": False, "extend": True})
 
     # def on_selection_modified(self):
-    #     self._view.set_read_only(self.delta > 0)
+    #     self._view.show_at_center(self._view.size()-75)
 
     def on_close(self):
         self.kernel.kernel.poll()
@@ -198,7 +198,7 @@ class IJuliaView(object):
         self.write("\nIn  [{:d}]: ".format(self.in_count),True)
         self.in_count += 1
         self.reader.startup = 0
-        self._view.show(self.input_region)
+        self._view.show_at_center(self._view.size()-75)
 
     def output(self, count, data):
         out = "\nOut [{:d}]: {!s}\n".format(self.in_count-1, data)
