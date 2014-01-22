@@ -22,6 +22,9 @@ The package has built successfully if you don't see any errors. See the [IJulia]
 
 
 #### Sublime-IJulia Installation
+The Sublime-IJulia project requires Sublime Text 3 with build version > 3019. You can get the latest version [here](http://www.sublimetext.com/3).
+
+
 1. Within Sublime Text 3, install the Package Control package from [here](https://sublime.wbond.net/installation)
 2. With Package Control successfully installed, run `Ctrl+Shift+p` (`Cmd+Shift+p` on OSX) to open the Sublime command pallette and start typing "Install Package", then select "Package Control: Install Package".
 3. From the list of packages that are then shown, start typing "IJulia" and then select the "IJulia" package. This installs the IJulia package into your Sublime packages directory.
@@ -29,7 +32,7 @@ The package has built successfully if you don't see any errors. See the [IJulia]
 5. Then, from the menu bar, open `Preferences => Package Settings => Sublime-IJulia => Settings - User`
 6. Copy everything from the `Settings - Default` file into the `Settings - User` file
 7. Now, in the `Settings - User` file, change the value of the `julia_command` field to the absolute path to your julia executable. If julia is on your path, this may not involve changing anything (i.e if you can type `julia` from the command line from any directory). Otherwise, under your appropriate system, unix => OSX, Linux, windows => Windows, puth the full path to your julia executable (i.e. `/usr/home/julia/usr/bin/julia`).
-8. On Windows and Linux, you should *not* have to change the `zmq_shared_library` field value. These are (fairly) standard installation locations, so they should work out of the box. For OSX, the default value is a best guess, but the value is subject to change depending on where homebrew ends up installing the ZMQ library when building the IJulia package from within julia. The easiest way to locate your ZMQ library (on any platform) is to to run the following commands from within julia: `using ZMQ; ZMQ.zmq`
+8. On Windows and Linux, you should *not* have to change the `zmq_shared_library` field value. These are (fairly) standard installation locations, so they should work out of the box. For OSX, the default value is a best guess, but the value is subject to change depending on where homebrew ends up installing the ZMQ library when building the IJulia package from within julia. The easiest way to locate your ZMQ library (on any platform) is to to run the following commands from within julia: `using ZMQ; ZMQ.zmq`. *PLEASE NOTE: When setting your path, you MUST specify the library extension as well. `/path/to/zmq/libzmq.so` or `/path/to/zmq/libzmq.so.3` for linux and `/path/to/zmq/libzmq.dylib` for OSX.*
 9. With the two values properly set in the settings file, you can now run `Ctrl+Shift+p` to open the command pallette and start typing "Open IJulia" and select "Sublime-IJulia: Open New IJulia Console". If all goes well, a new view should open up in Sublime, titled `*IJulia 0*` and the julia banner should display shortly (2-5 seconds). Success!
 10. If an error message pops up, the new view doesn't open, or nothing shows up in your new view, there's been some kind of error in the above steps. Please go back over the steps to ensure everything was followed and if the results are the same, please open an issue [here](https://github.com/karbarcca/Sublime-IJulia/issues) and I'm more than happy to help troubleshoot the installation.
 
