@@ -1,22 +1,25 @@
-import uuid, os, subprocess, threading, time, json, sublime, sublime_plugin
+import uuid, os, subprocess, threading, time, json
 from ctypes import *
+from subprocess import Popen
+debug = 1
+if not debug:
+    import sublime, sublime_plugin
 
 SETTINGS_FILE = 'Sublime-IJulia.sublime-settings'
 
 def plugin_loaded():
-    #global ZMQ
-    #import IJulia.ZMQ as ZMQ
     global zmq
-    settings = sublime.load_settings(SETTINGS_FILE)
-    cmd = settings.get("zmq_shared_library")
-    if sublime.platform() == 'windows':
-        p = os.path.expanduser(cmd["windows"])
-        print(p)
-        zmq = cdll.LoadLibrary(p)
-    elif sublime.platform() == 'linux':
-        zmq = cdll.LoadLibrary(os.path.expanduser(cmd["linux"]))
+    if not debug:
+        settings = sublime.load_settings(SETTINGS_FILE)
+        cmd = settings.get("zmq_shared_library")
+        if sublime.platform() == 'windows':
+            zmq = cdll.LoadLibrary(os.path.expanduser(cmd["windows"]))
+        elif sublime.platform() == 'linux':
+            zmq = cdll.LoadLibrary(os.path.expanduser(cmd["linux"]))
+        else:
+            zmq = cdll.LoadLibrary(os.path.expanduser(cmd["osx"]))
     else:
-        zmq = cdll.LoadLibrary(os.path.expanduser(cmd["osx"]))
+        zmq = cdll.LoadLibrary('C:/Users/karbarcca/.julia/ZMQ/deps/usr/lib/libzmq')
     #Return types
     zmq.zmq_msg_data.restype = c_char_p
     zmq.zmq_ctx_new.restype = c_void_p
@@ -38,7 +41,6 @@ def plugin_loaded():
     zmq.zmq_msg_recv.argtypes = [POINTER(_Message), c_void_p, c_int]
     zmq.zmq_msg_data.argtypes = [POINTER(_Message)]
     zmq.zmq_msg_size.argtypes = [POINTER(_Message)]
-    print("hey")
 
 def zmq_error():
     err = zmq.zmq_errno()
@@ -146,7 +148,6 @@ class Socket(object):
     def recv_msg(self):
         if self.alive:
             m = Message()
-            #what's the return for zmq_msg_recv? is there where we're blocking?
             zmq.zmq_msg_recv(byref(m.msg),self.ptr,NOBLOCK)
             data = zmq.zmq_msg_data(byref(m.msg))
             length = zmq.zmq_msg_size(byref(m.msg))
@@ -189,14 +190,30 @@ class Socket(object):
         return m
         
 class KernelManager(object):
-    def __init__(self, cmd, id, profile):
+    def __init__(self, id):
         self.id = id
-        if os.name == "nt":
-            creationflags = 0x8000000 # CREATE_NO_WINDOW
+        if not debug:
+            settings = sublime.load_settings(SETTINGS_FILE)
+            cmd = settings.get("julia_command")
+            if sublime.platform() == 'windows':
+                cmd = cmd["windows"]
+            else:
+                cmd = cmd["unix"]
+            filename = '\"' + sublime.packages_path() + '/User/profile-' + str(id) + '.json\"'
         else:
-            creationflags = 0
-        print("cmd: %s" % cmd)
-        self.kernel = subprocess.Popen(cmd, shell=True, creationflags=creationflags)
+            cmd = "julia-readline"
+            filename = '\"C:/Users/karbarcca/AppData/Roaming/Sublime Text 3/Packages/User/profile-' + str(id) + '.json\"'
+        profile = zmq_profile(filename, id)
+        cmd = cmd + ' ' + os.path.expanduser('~/.julia/IJulia/src/kernel.jl ') + filename
+        if not debug:
+            if sublime.platform() == "windows":
+                creationflags = 0x8000000 # CREATE_NO_WINDOW
+            else:
+                creationflags = 0
+        else:
+            creationflags = 0x8000000 # CREATE_NO_WINDOW
+        print('Command Executed: %s' % cmd)
+        self.kernel = Popen(cmd, shell=True, creationflags=creationflags)
         ip = profile['transport'] + '://' + profile['ip'] + ':'
         self.context = Context()
         self.heartbeat = Socket(self.context, REQ)
@@ -219,16 +236,6 @@ class KernelManager(object):
               "user_expressions": {}, 
               "allow_stdin": True}, {})
         ret = self.shell.send(execute_request)
-        #Next is getting the response back from the kernel, which can be
-        #tricky if the kernel blocks upon executing code, so we just know
-        #we need to get 6 messages and recv_msg() non-blocks otherwise
-        count = 6
-        while count:
-            m = self.shell.recv_msg()
-            if m:
-                count -= 1
-            else:
-                time.sleep(.1)
 
     def shutdown(self, restart):
         shutdown_request = Msg(["shutdown_request"], 
@@ -239,16 +246,6 @@ class KernelManager(object):
              {"restart": restart}, {})
         print("just about to send shutdown_request")
         ret = self.shell.send(shutdown_request)
-        #Next is getting the response back from the kernel, which can be
-        #tricky if the kernel blocks, so we just know
-        #we need to get 6 messages and recv_msg() non-blocks otherwise
-        count = 6
-        while count:
-            m = self.shell.recv_msg()
-            if m:
-                count -= 1
-            else:
-                time.sleep(.1)
 
     def hb_send(self):
         self.heartbeat.send_msg( str(time.time()) )
@@ -275,7 +272,11 @@ class KernelManager(object):
 
     def get_status(self):
         m = self.sub.recv()
-        return m.content['execution_state']   
+        return m.content['execution_state']
+
+    def get_display_data(self):
+        m = self.sub.recv()
+        return
 
 class RecvThread(threading.Thread):
     def __init__(self, kernel, julia_view):
@@ -283,16 +284,18 @@ class RecvThread(threading.Thread):
         self.kernel = kernel
         self.heartbeat = kernel.heartbeat
         self.sub = kernel.sub
+        self.shell = kernel.shell
         self.jv = julia_view
         self.startup = 1
-        self.liveness = 5 #liveness
+        self.liveness = 5
         self.handlers = {'': self.emp_h,
                      'pyin': self.pyin_h,
                      'pyout': self.pyout_h,
                      'pyerr': self.pyerr_h,
                      'stdout': self.stdout_h,
                      'stderr': self.stderr_h,
-                     'status': self.status_h}
+                     'status': self.status_h,
+                     'display_data': self.display_data_h}
 
     def emp_h(self):
         r = self.kernel.hb_send()
@@ -333,12 +336,18 @@ class RecvThread(threading.Thread):
             self.jv.in_output()
             self.jv._view.set_status("kernel","")
         else:
-            self.jv._view.set_status("kernel","Julia kernel is working...")
+            self.jv._view.set_status("kernel","IJulia kernel is working...")
+        return 1
+
+    def display_data_h(self):
+        data = self.kernel.get_display_data()
+        #self.jv.display_data_output(data)
         return 1
 
     def run(self):
         l = self.liveness
         while True:
+            self.shell.recv_msg()
             m = self.sub.recv_msg()
             r = self.handlers.get(m, self.pyin_h)()
             if r:

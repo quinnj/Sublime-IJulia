@@ -7,7 +7,7 @@
 	// e.g. "unix": "/home/username/julia/usr/bin/julia-release-readline"
 	"julia_command": {
 		"unix": "julia",
-		"windows": "julia.bat"
+		"windows": "start julia"
 		},
 	// "zmq_shared_library" refers to the absolute path of the ZMQ
 	// shared library file. This file is automatically downloaded/built

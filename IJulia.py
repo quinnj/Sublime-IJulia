@@ -9,14 +9,13 @@ class IJuliaManager(object):
         self.text_transfer = ""
         self.cmdhist = [""]
 
-    #where can this be called from?
     def julia_view(self, view):
         julia_id = view.settings().get("julia_id")
         try:        
             jv = self.julia_views[julia_id]
         except:
             return None
-        jv.update_view(view) #what does this do
+        jv.update_view(view)
         return jv
 
     def open(self, window):
@@ -51,29 +50,20 @@ manager = IJuliaManager()
 
 class IJuliaView(object):
     def start_kernel(self):
-        print("starting kernel...")
-        self.kernel = KernelManager.KernelManager(self.cmd, self.id, self.profile)
+        print("Starting IJulia backend...")
+        self.kernel = KernelManager.KernelManager(self.id)
         self.reader = KernelManager.RecvThread(self.kernel, self)
         self.reader.start()
         self.kernel.execute("Base.banner()")
 
     def __init__(self, view, id):
         self.id = id
-        settings = sublime.load_settings(SETTINGS_FILE)
-        cmd = settings.get("julia_command")
-        if sublime.platform() == 'windows':
-            cmd = cmd["windows"]
-        else:
-            cmd = cmd["unix"]
-        filename = "\"" + sublime.packages_path() + '/User/profile-' + str(id) + '.json\"'
-        self.cmd = cmd + " " + os.path.expanduser("~/.julia/IJulia/src/kernel.jl ") + filename
-        self.profile = KernelManager.zmq_profile(filename, id)
         sublime.set_timeout_async(self.start_kernel,0)
         self._view = view
         self._output_end = view.size()
         self._window = view.window()
         self.cmdstate = -1
-        self.in_count = 1
+        self.in_count = 2
         self.stdout_pos = 0
         view.settings().set("julia",True)
         view.set_syntax_file("Packages/IJulia/Syntax/Julia.tmLanguage")
@@ -114,8 +104,8 @@ class IJuliaView(object):
             for i in range(abs(self.delta)):
                 self._window.run_command("move", {"by": "characters", "forward": False, "extend": True})
 
-    def on_selection_modified(self):
-        self._view.set_read_only(self.delta > 0)
+    # def on_selection_modified(self):
+    #     self._view.set_read_only(self.delta > 0)
 
     def on_close(self):
         self.kernel.kernel.poll()
@@ -176,11 +166,11 @@ class IJuliaView(object):
         if v.sel()[0].begin() != v.size():
             v.sel().clear()
             v.sel().add(sublime.Region(v.size()))
-        command = self.user_input
         v.run_command("insert", {"characters": '\n'})
+        command = self.user_input
         self._output_end += len(command)
         self.stdout_pos = self._output_end
-        manager.cmdhist.insert(0,command)
+        manager.cmdhist.insert(0,command[:-1])
         manager.cmdhist = list(self.unique(manager.cmdhist))
         self.cmdstate = -1
         self.command = command
