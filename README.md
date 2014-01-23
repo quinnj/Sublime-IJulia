@@ -14,11 +14,12 @@ code development through REPL testing and debugging without ever having to leave
 This project is still in beta, so please be patient and open [issues](https://github.com/karbarcca/Sublime-IJulia/issues) liberally.
 
 #### IJulia Installation
-Before installing the Sublime-IJulia package, you must first ensure you have added and successfully built the IJulia package from within julia itself. This can be done by running:
+Before installing the Sublime-IJulia package, you must first ensure you have added and successfully built the `ZMQ` julia package from within julia itself. You will also need the `IJulia` to be added, though not necessarily successfully built (the reason is that `IJulia` requires IPython to be installed, while Sublime-IJulia does *not* require IPython). Simply adding the IJulia package will ensure the needed files are installed, whether or not it can be used with ipython (though the use of IPython notebooks is highly encouraged for code presentation!) These steps can be done by running the following from within julia:
 ```julia
-Pkg.add("IJulia")
+Pkg.add("ZMQ")    # Needs to install and build successfully
+Pkg.add("IJulia") # Needs to install, but not necessarily build successfully
 ```
-The package has built successfully if you don't see any errors. See the [IJulia](https://github.com/JuliaLang/IJulia.jl) page for additional help.
+See the [IJulia](https://github.com/JuliaLang/IJulia.jl) page for additional help.
 
 
 #### Sublime-IJulia Installation
