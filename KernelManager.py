@@ -190,15 +190,16 @@ class Socket(object):
         return m
         
 class KernelManager(object):
-    def __init__(self, id):
+    def __init__(self, id, cmd):
         self.id = id
         if not debug:
-            settings = sublime.load_settings(SETTINGS_FILE)
-            cmd = settings.get("julia_command")
-            if sublime.platform() == 'windows':
-                cmd = cmd["windows"]
-            else:
-                cmd = cmd["unix"]
+            if cmd == None:
+                settings = sublime.load_settings(SETTINGS_FILE)
+                cmd = settings.get("julia_command")
+                if sublime.platform() == 'windows':
+                    cmd = cmd["windows"]
+                else:
+                    cmd = cmd["unix"]
             filename = '\"' + sublime.packages_path() + '/User/profile-' + str(id) + '.json\"'
         else:
             cmd = "julia-readline"

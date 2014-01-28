@@ -1,5 +1,6 @@
 [
     { "caption": "Sublime-IJulia: Open New IJulia Console", "command": "i_julia_open"},
+    { "caption": "Sublime-IJulia: Open IJulia Console with Custom Command", "command": "i_julia_open_custom"},
     { "caption": "Apply Julia Syntax to .jl Files", "command": "julia_syntax"},
     { "caption": "Sublime-IJulia: Enter", "command": "i_julia_enter"},
     { "caption": "Sublime-IJulia: Receive", "command": "i_julia_receive"},

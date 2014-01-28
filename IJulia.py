@@ -1,4 +1,4 @@
-import os, sublime, sublime_plugin
+import os, time, sublime, sublime_plugin
 from . import KernelManager
 
 SETTINGS_FILE = 'Sublime-IJulia.sublime-settings'
@@ -18,10 +18,10 @@ class IJuliaManager(object):
         jv.update_view(view)
         return jv
 
-    def open(self, window):
+    def open(self, window, cmd):
         id = len(self.julia_views)
         view = window.new_file()
-        jv = IJuliaView(view, id)
+        jv = IJuliaView(view, id, cmd)
         self.julia_views.append(jv)
         view.set_scratch(True)
         view.set_name("*IJulia %d*" % id)
@@ -51,13 +51,18 @@ manager = IJuliaManager()
 class IJuliaView(object):
     def start_kernel(self):
         print("Starting IJulia backend...")
-        self.kernel = KernelManager.KernelManager(self.id)
+        self.kernel = KernelManager.KernelManager(self.id,self.cmd)
         self.reader = KernelManager.RecvThread(self.kernel, self)
         self.reader.start()
         self.kernel.execute("Base.banner()")
+        time.sleep(4)
+        self.kernel.kernel.poll()
+        if self.kernel.kernel.returncode != None:
+            sublime.error_message('IJulia Kernel failed to start. Check your "julia_command" value in the Sublime-IJulia package settings or through the custom command interface. Otherwise, please open an issue to troubleshoot: https://github.com/karbarcca/Sublime-IJulia/issues?state=open')
 
-    def __init__(self, view, id):
+    def __init__(self, view, id, cmd):
         self.id = id
+        self.cmd = cmd
         sublime.set_timeout_async(self.start_kernel,0)
         self._view = view
         self._output_end = view.size()
@@ -236,8 +241,15 @@ class IJuliaView(object):
 # Window Commands #########################################
 # Opens a new REPL
 class IJuliaOpenCommand(sublime_plugin.WindowCommand):
-    def run(self):
-        manager.open(self.window)
+    def run(self, cmd=None):
+        manager.open(self.window,cmd)
+
+class IJuliaOpenCustomCommand(sublime_plugin.TextCommand):
+    def custom_open(self,cmd):
+        manager.open(self.view.window(),cmd)
+
+    def run(self, cmd=None):
+        self.view.window().show_input_panel("Enter Julia Command","julia -p 4",self.custom_open,None,None)
 
 class IJuliaRestartCommand(sublime_plugin.TextCommand):
     def run(self, edit):
