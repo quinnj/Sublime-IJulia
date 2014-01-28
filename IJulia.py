@@ -198,7 +198,7 @@ class IJuliaView(object):
         self.write("\nIn  [{:d}]: ".format(self.in_count),True)
         self.in_count += 1
         self.reader.startup = 0
-        self._view.show_at_center(self._view.size()-75)
+        self._view.show_at_center(self._view.size())
 
     def output(self, count, data):
         out = "\nOut [{:d}]: {!s}\n".format(self.in_count-1, data)

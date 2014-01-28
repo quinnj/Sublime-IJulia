@@ -1,4 +1,5 @@
 [
+	
 	{ "keys": ["up"], "command": "i_julia_view_previous",
 	"context":
 		[
