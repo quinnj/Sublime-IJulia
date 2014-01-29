@@ -9,15 +9,6 @@ class IJuliaManager(object):
         self.text_transfer = ""
         self.cmdhist = [""]
 
-    def julia_view(self, view):
-        julia_id = view.settings().get("julia_id")
-        try:        
-            jv = self.julia_views[julia_id]
-        except:
-            return None
-        jv.update_view(view)
-        return jv
-
     def open(self, window, cmd):
         id = len(self.julia_views)
         view = window.new_file()
@@ -36,15 +27,23 @@ class IJuliaManager(object):
         view.set_name("*IJulia %d*" % id)
         return True
 
-    def remove_ijulia_view(self, julia_view):
-        julia_id = julia_view.id
-        try:
-            del self.julia_views[julia_id]
-        except:
+    def julia_view(self, view):
+        julia_id = view.settings().get("julia_id")
+        if julia_id == None:
             return None
-        for i in range(0,len(self.julia_views)):
-            self.julia_views[i]._view.settings().set("julia_id", i)
-            self.julia_views[i]._view.set_name("IJulia %d*" % i)
+        jv = self.julia_views[julia_id]
+        #jv.update_view(view)
+        return jv
+
+    def remove_ijulia_view(self, view):
+        julia_id = view._view.settings().get("julia_id")
+        if julia_id == None:
+            return None
+        jvs = manager.julia_views
+        del jvs[julia_id]
+        for i in range(0,len(jvs)):
+            jvs[i]._view.settings().set("julia_id", i)
+            jvs[i]._view.set_name("IJulia %d*" % i)
 
 manager = IJuliaManager()
 
@@ -55,10 +54,6 @@ class IJuliaView(object):
         self.reader = KernelManager.RecvThread(self.kernel, self)
         self.reader.start()
         self.kernel.execute("Base.banner()")
-        time.sleep(4)
-        self.kernel.kernel.poll()
-        if self.kernel.kernel.returncode != None:
-            sublime.error_message('IJulia Kernel failed to start. Check your "julia_command" value in the Sublime-IJulia package settings or through the custom command interface. Otherwise, please open an issue to troubleshoot: https://github.com/karbarcca/Sublime-IJulia/issues?state=open')
 
     def __init__(self, view, id, cmd):
         self.id = id
@@ -78,6 +73,18 @@ class IJuliaView(object):
         self._window.set_view_index(view, group + 1, len(self._window.views_in_group(group + 1)))
         self._window.focus_view(oldview)
         self._window.focus_view(view)
+
+    def on_close(self):
+        self.kernel.kernel.poll()
+        if self.kernel.kernel.returncode == None:
+            self.kernel.shutdown(False)
+        self.write("\n\n***Kernel Died***\n",True)
+        self._view.set_read_only(True)
+        manager.remove_ijulia_view(self)
+
+    def update_view(self, view):
+        if self._view is not view:
+            self._view = view
 
     def shift_enter(self, edit):
         if self.delta < 0:
@@ -115,17 +122,6 @@ class IJuliaView(object):
 
     # def on_selection_modified(self):
     #     self._view.show_at_center(self._view.size()-75)
-
-    def on_close(self):
-        self.kernel.kernel.poll()
-        if self.kernel.kernel.returncode == None:
-            self.kernel.shutdown(False)
-        manager.remove_ijulia_view(self)
-
-    def kernel_died(self):
-        self.write("\n\n***Kernel Died***\n",True)
-        self._view.set_read_only(True)
-        manager.remove_ijulia_view(self)        
 
     def escape(self, edit):
         self._view.set_read_only(False)
@@ -224,10 +220,6 @@ class IJuliaView(object):
     @property
     def delta(self):
         return self._output_end - self._view.sel()[0].begin()
-
-    def update_view(self, view):
-        if self._view is not view:
-            self._view = view
 
     def allow_deletion(self):
         o = self._output_end
@@ -391,15 +383,15 @@ class JuliaPass(sublime_plugin.TextCommand):
         pass
 
 class IJuliaListener(sublime_plugin.EventListener):
-    def on_selection_modified(self, view):
-        rv = manager.julia_view(view)
+    #def on_selection_modified(self, view):
+        #rv = manager.julia_view(view)
         # if rv:
         #     rv.on_selection_modified()
 
     def on_close(self, view):
-        rv = manager.julia_view(view)
-        if rv:
-            rv.on_close()    
+        jv = manager.julia_view(view)
+        if jv != None:
+            jv.on_close()
 
     def on_text_command(self, view, command_name, args):
         rv = manager.julia_view(view)

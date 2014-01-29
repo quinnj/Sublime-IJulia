@@ -302,7 +302,14 @@ class RecvThread(threading.Thread):
         r = self.kernel.hb_send()
         time.sleep(.1)
         response = self.kernel.hb_recv()
-        if self.startup or response or r:
+        if self.startup:
+            time.sleep(.1)
+            self.kernel.kernel.poll()
+            if self.kernel.kernel.returncode != None:
+                return 0
+                #sublime.error_message('IJulia Kernel failed to start. Check your "julia_command" value in the Sublime-IJulia package settings or through the custom command interface. Otherwise, please open an issue to troubleshoot: https://github.com/karbarcca/Sublime-IJulia/issues?state=open')
+            return 1
+        elif response or r:
             return 1
         else:
             return 0
@@ -362,5 +369,5 @@ class RecvThread(threading.Thread):
                 self.kernel.sub.close()
                 self.kernel.shell.close()
                 print("Sockets closed...")
-                self.jv.kernel_died()
+                self.jv.on_close()
                 break
