@@ -1,23 +1,68 @@
+// "command_name" gives you the chance to name different commands
+// that will be displayed when opening a new console view.
+// e.g. " -p 4" could be used for a command that starts julia -p 4
+
+// "julia" refers to the absolute path of your julia executable.
+// By default, it is assumed that your julia is in your system PATH.
+// To launch a specific julia executable or if your julia is NOT in your
+// system PATH, modify your platform's value string below with your 
+// julia's absolute path.
+// e.g. "unix": "/home/username/julia/usr/bin/julia-release-readline"
+
+// "ijulia_kernel" refers to the IJulia backend file that starts up
+// the backend. This should not have to be changed at all.
+
+// "zmq_shared_library" refers to the absolute path of the ZMQ
+// shared library file. This file is automatically downloaded/built
+// with the installation of the IJulia package from within julia.
+// The file is located in a standard location on windows and linux (usually)
+// but is different on OSX through the homebrew installation.
+// The name of the file to locate is "libzmq.dylib" on OSX
+// "libzmq.so" or "libzmq.so.3" on linux
+
+// additional commands can be added by copying 
+/*	    
+	,{
+        "command_name": "default",
+        "julia": "julia",
+        "ijulia_kernel": "~/.julia/v0.3/IJulia/src/kernel.jl"
+    }
+*/
+// Note the comma before the 1st curly brace. This can be pasted
+// after the default command in your platform below to provide
+// different julia commands
 {
-	// "julia_command" refers to the absolute path of your julia executable.
-	// By default, it is assumed that your julia is in your system PATH.
-	// To launch a specific julia executable or if your julia is NOT in your
-	// system PATH, modify your platform's value string below with your 
-	// julia's absolute path.
-	// e.g. "unix": "/home/username/julia/usr/bin/julia-release-readline"
-	"julia_command": {
-		"unix": "julia",
-		"windows": "julia-readline"
-		},
-	// "zmq_shared_library" refers to the absolute path of the ZMQ
-	// shared library file. This file is automatically downloaded/built
-	// with the installation of the IJulia package from within julia.
-	// The file is located in a standard location on windows and linux (usually)
-	// but is different on OSX through the homebrew installation.
-	// The name of the file to locate is "libzmq.dylib"
-	"zmq_shared_library": {
-		"linux": "~/.julia/ZMQ/deps/usr/lib/libzmq.so",
-		"osx": "/usr/local/Cellar/zeromq/3.2.4/lib/libzmq.dylib",
-		"windows": "~/.julia/ZMQ/deps/usr/lib/libzmq"
-	}
+"linux": {
+    "zmq_shared_library": "~/.julia/v0.3/ZMQ/deps/usr/lib/libzmq.so",
+    "commands": [
+        {
+            "command_name": "default",
+            "julia": "julia",
+            "julia_args": "",
+            "ijulia_kernel": "~/.julia/v0.3/IJulia/src/kernel.jl"
+        }
+    ]
+},
+"osx": {
+    "zmq_shared_library": "/usr/local/Cellar/zeromq/3.2.4/lib/libzmq.dylib",
+    "commands": [
+        {
+            "command_name": "default",
+            "julia": "julia",
+            "julia_args": "",
+            "ijulia_kernel": "~/.julia/v0.3/IJulia/src/kernel.jl"
+        }
+    ]
+},
+"windows": {
+    "zmq_shared_library": "~/.julia/v0.3/ZMQ/deps/usr/lib/libzmq.dll",
+    "commands": [
+        {
+            "command_name": "default",
+            "julia": "julia-readline.exe",
+            "julia_args": "",
+            "ijulia_kernel": "~/.julia/v0.3/IJulia/src/kernel.jl"
+        }
+    ]
+}
 }

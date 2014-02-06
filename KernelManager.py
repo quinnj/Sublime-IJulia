@@ -11,13 +11,13 @@ def plugin_loaded():
     global zmq
     if not debug:
         settings = sublime.load_settings(SETTINGS_FILE)
-        cmd = settings.get("zmq_shared_library")
-        if sublime.platform() == 'windows':
-            zmq = cdll.LoadLibrary(os.path.expanduser(cmd["windows"]))
-        elif sublime.platform() == 'linux':
-            zmq = cdll.LoadLibrary(os.path.expanduser(cmd["linux"]))
+        cmd = os.path.expanduser(settings.get(sublime.platform())["zmq_shared_library"])
+        if os.path.exists(cmd):
+            zmq = cdll.LoadLibrary(cmd)
+        elif os.path.exists(cmd.replace("/v0.3","")):
+            zmq = cdll.LoadLibrary(cmd.replace("/v0.3",""))
         else:
-            zmq = cdll.LoadLibrary(os.path.expanduser(cmd["osx"]))
+            sublime.error_message("ZMQ Shared Library not found at %s" % cmd)
     else:
         zmq = cdll.LoadLibrary('C:/Users/karbarcca/.julia/ZMQ/deps/usr/lib/libzmq')
     #Return types
@@ -48,13 +48,13 @@ def zmq_error():
     return er[:].decode()
 
 def zmq_profile(filename, id):
-    t = {"hb_port":5680 + (5*(id)),
-         "control_port":5679 + (5*(id)),
-         "stdin_port":5678 + (5*(id)),
+    t = {"hb_port":50680 + (5*(id)),
+         "control_port":50679 + (5*(id)),
+         "stdin_port":50678 + (5*(id)),
          "ip":"127.0.0.1",
          "transport":"tcp",
-         "shell_port":5681 + (5*(id)),
-         "iopub_port":5682 + (5*(id)),
+         "shell_port":50681 + (5*(id)),
+         "iopub_port":50682 + (5*(id)),
          "key":""}
     f = open(filename[1:-1], 'w')
     f.write(json.dumps(t))
@@ -192,29 +192,23 @@ class Socket(object):
 class KernelManager(object):
     def __init__(self, id, cmd):
         self.id = id
-        if not debug:
-            if cmd == None:
-                settings = sublime.load_settings(SETTINGS_FILE)
-                cmd = settings.get("julia_command")
-                if sublime.platform() == 'windows':
-                    cmd = cmd["windows"]
-                else:
-                    cmd = cmd["unix"]
-            filename = '\"' + sublime.packages_path() + '/User/profile-' + str(id) + '.json\"'
-        else:
-            cmd = "julia-readline"
-            filename = '\"C:/Users/karbarcca/AppData/Roaming/Sublime Text 3/Packages/User/profile-' + str(id) + '.json\"'
+        filename = '\"' + sublime.packages_path() + '/User/profile-' + str(id) + '.json\"'
         profile = zmq_profile(filename, id)
-        cmd = cmd + ' ' + os.path.expanduser('~/.julia/IJulia/src/kernel.jl ') + filename
-        if not debug:
-            if sublime.platform() == "windows":
-                creationflags = 0x8000000 # CREATE_NO_WINDOW
+        e = os.path.expanduser
+        ju = e(cmd['julia'])
+        iju = e(cmd['ijulia_kernel'])
+        if not os.path.exists(iju):
+            if not os.path.exists(iju.replace("/v0.3","")):
+                sublime.error_message("IJulia kernel.jl file not found at %s" % iju)
             else:
-                creationflags = 0
-        else:
+                iju = iju.replace("/v0.3","")
+        c = ju + ' ' + cmd['julia_args'] + ' ' + iju + ' ' + filename
+        if sublime.platform() == "windows":
             creationflags = 0x8000000 # CREATE_NO_WINDOW
-        print('Command Executed: %s' % cmd)
-        self.kernel = Popen(cmd, shell=True, creationflags=creationflags)
+        else:
+            creationflags = 0
+        print('Command Executed: %s' % c)
+        self.kernel = Popen(c, shell=True, creationflags=creationflags)
         ip = profile['transport'] + '://' + profile['ip'] + ':'
         self.context = Context()
         self.heartbeat = Socket(self.context, REQ)
@@ -245,7 +239,6 @@ class KernelManager(object):
              "session": str(uuid.uuid4()), 
              "msg_type": "shutdown_request"}, 
              {"restart": restart}, {})
-        print("just about to send shutdown_request")
         ret = self.shell.send(shutdown_request)
 
     def hb_send(self):

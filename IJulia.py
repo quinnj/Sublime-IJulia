@@ -232,16 +232,22 @@ class IJuliaView(object):
 
 # Window Commands #########################################
 # Opens a new REPL
-class IJuliaOpenCommand(sublime_plugin.WindowCommand):
-    def run(self, cmd=None):
-        manager.open(self.window,cmd)
+class IJuliaOpenCommand(sublime_plugin.TextCommand):
+    def run(self,edit):
+        settings = sublime.load_settings(SETTINGS_FILE)
+        self.cmd = settings.get(sublime.platform())['commands']
+        if len(self.cmd) == 1:
+            manager.open(self.view.window(),self.cmd[0])
+        else:
+            panel_list = []
+            for i in self.cmd:
+                panel_list.append(i['command_name'])
+            self.view.window().show_quick_panel(panel_list, self.run_custom,sublime.MONOSPACE_FONT)
 
-class IJuliaOpenCustomCommand(sublime_plugin.TextCommand):
-    def custom_open(self,cmd):
-        manager.open(self.view.window(),cmd)
-
-    def run(self, cmd=None):
-        self.view.window().show_input_panel("Enter Julia Command","julia -p 4",self.custom_open,None,None)
+    def run_custom(self,num):
+        if num == -1:
+            return
+        manager.open(self.view.window(),self.cmd[num])
 
 class IJuliaRestartCommand(sublime_plugin.TextCommand):
     def run(self, edit):
