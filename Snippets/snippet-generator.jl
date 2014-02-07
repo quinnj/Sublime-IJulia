@@ -1,4 +1,4 @@
-cd("C:/Users/karbarcca/AppData/Roaming/Sublime Text 3/Packages/Sublime-Julia/Snippets")
+cd("C:/Users/karbarcca/AppData/Roaming/Sublime Text 3/Packages/IJulia/Snippets")
 include("C:/Users/karbarcca/julia/doc/helpdb.jl")
 t = ans
 f = open("julia.sublime-completions","w")
