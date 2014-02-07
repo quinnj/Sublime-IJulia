@@ -37,16 +37,16 @@ The Sublime-IJulia project requires Sublime Text 3 with build version > 3019. Yo
 10. If an error message pops up, it's probably because Sublime can't find your ZMQ library or julia executable, return to step 7/8. If `***Kernel Died***` shows up in a new view, there's been some kind of error in your julia command, so return to step 7. In any case, please go back over the steps to ensure everything was followed, restart Sublime, and if the results are the same, please open an issue [here](https://github.com/karbarcca/Sublime-IJulia/issues) and I'm more than happy to help troubleshoot the installation.
 
 #### Using Sublime-IJulia
-* Commands can be entered directly in the IJulia console view, pressing `enter` to execute. 
-* A newline can be entered without executing the command by typing `Shift+Enter` for multi-line commands.
+* Commands can be entered directly in the IJulia console view, pressing `shift+enter` to execute. 
+* A newline can be entered without executing the command by typing `Enter` for multi-line commands.
 * Pressing the `up` and `down` arrows in the console view will navigate through command history (if any).
 * `escape` will clear the current command
 * All other regular sublime features should work as normal also in the console view (multiple cursors, macros, etc.)
 
 
 From a julia file (extension .jl), you also have the ability to "send" code to the console to be evaluated. 
-* `Ctrl+enter` without any code selected will send the current line to the console to be executed
-* `Ctrl+enter` with code selected will send the selected text to the console to be executed
+* `Shift+enter` without any code selected will send the current line to the console to be executed
+* `Shift+enter` with code selected will send the selected text to the console to be executed
 * `Ctrl+shift+enter` will send the entire file's contents to the console to be executed
 
 #### Other Sublime-IJulia Package Features
