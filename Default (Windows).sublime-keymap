@@ -14,14 +14,14 @@
 			{ "key": "auto_complete_visible", "operator": "equal", "operand": false }
 		]
 	},
-	{ "keys": ["enter"], "command": "i_julia_enter", "args": {},
+	{ "keys": ["shift+enter"], "command": "i_julia_enter", "args": {},
 	"context":
 		[
 			{ "key": "setting.julia", "operator": "equal", "operand": true },
 			{ "key": "auto_complete_visible", "operator": "equal", "operand": false }
 		]
 	},
-	{ "keys": ["shift+enter"], "command": "i_julia_shift_enter", "args": {},
+	{ "keys": ["enter"], "command": "i_julia_shift_enter", "args": {},
 	"context":
 		[
 			{ "key": "setting.julia", "operator": "equal", "operand": true },
@@ -80,18 +80,20 @@
 		]
 	},
 
-	{ "keys": ["ctrl+enter"], "command": "i_julia_transfer_current", "args": {"scope": "selection"},
+	{ "keys": ["shift+enter"], "command": "i_julia_transfer_current", "args": {"scope": "selection"},
 	"context":
 		[
 			{ "key": "selection_empty", "operator": "equal", "operand": false, "match_all": true },
-			{ "key": "selector", "operator": "equal", "operand": "source.julia"}
+			{ "key": "selector", "operator": "equal", "operand": "source.julia"},
+			{ "key": "setting.julia", "operator": "equal", "operand": false }
 		]
 	},
-	{ "keys": ["ctrl+enter"], "command": "i_julia_transfer_current", "args": {"scope": "lines"},
+	{ "keys": ["shift+enter"], "command": "i_julia_transfer_current", "args": {"scope": "lines"},
 	"context":
 		[
 			{ "key": "selection_empty", "operator": "equal", "operand": true, "match_all": true },
-			{ "key": "selector", "operator": "equal", "operand": "source.julia"}
+			{ "key": "selector", "operator": "equal", "operand": "source.julia"},
+			{ "key": "setting.julia", "operator": "equal", "operand": false }
 		]
 	},
 	{ "keys": ["ctrl+shift+enter"], "command": "i_julia_transfer_current", "args": {"scope": "file"},
