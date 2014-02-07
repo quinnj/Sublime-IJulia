@@ -1,0 +1,7 @@
+<snippet>
+    <content><![CDATA[
+@printf("${1:formatStr)", ${2:argList})
+]]></content>
+    <tabTrigger>printf</tabTrigger>
+    <scope>source.julia</scope>
+</snippet>
