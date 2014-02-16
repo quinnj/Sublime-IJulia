@@ -258,6 +258,42 @@ class IJuliaRestartCommand(sublime_plugin.TextCommand):
     def is_enabled(self):
         return self.is_visible()
 
+class IJuliaSetWorkingFolderToView(sublime_plugin.TextCommand):
+    def run(self, edit):
+        
+        if not self.view.file_name():
+            return
+        
+        import os
+        fileDir = os.path.dirname( self.view.file_name() )
+        
+        cmd = 'cd("' + fileDir + '")'
+        
+        mg = manager
+        jvs = mg.julia_views
+        
+        if (len(jvs) == 0):  # no julia views
+            return
+        elif len(jvs) > 1:
+            mg.text_transfer = cmd
+            panel_list = []
+            for v in jvs:
+                panel_list.append(v._view.name())
+            self.view.window().show_quick_panel(panel_list, self.choose_julia,sublime.MONOSPACE_FONT)
+        else:
+            jv = jvs[0]
+            jv.write(cmd,False)
+            jv.enter(edit)
+        
+        
+    def choose_julia(edi,num):
+        if num == -1:
+            return
+        jv = manager.julia_views[num]
+        jv.write(manager.text_transfer,False)
+        jv._view.run_command("i_julia_enter", {})
+            
+
 class IJuliaTransferCurrent(sublime_plugin.TextCommand):
     def run(self, edit, scope="selection"):
         text = ""
@@ -267,6 +303,11 @@ class IJuliaTransferCurrent(sublime_plugin.TextCommand):
             text = self.selected_lines()
         elif scope == "file":
             text = self.selected_file()
+        elif scope == "file_with_include":
+            # if view doesn't have a file name,
+            #  it will ask for one
+            self.view.run_command("save")
+            text = 'include("' + self.view.file_name() + '")'
         
         mg = manager
         jvs = mg.julia_views
