@@ -102,5 +102,12 @@
 			{ "key": "selection_empty", "operator": "equal", "operand": true, "match_all": true },
 			{ "key": "selector", "operator": "equal", "operand": "source.julia"}
 		]
-	}
+	},
+	{ "keys": ["f5"], "command": "i_julia_transfer_current", "args": {"scope": "file_with_include"},
+    "context":
+        [
+            { "key": "selection_empty", "operator": "equal", "operand": true, "match_all": true },
+            { "key": "selector", "operator": "equal", "operand": "source.julia"}
+        ]
+    }
 ]
