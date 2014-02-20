@@ -1,7 +1,7 @@
 import uuid, os, subprocess, threading, time, json
 from ctypes import *
 from subprocess import Popen
-debug = 0
+debug = 1
 if not debug:
     import sublime, sublime_plugin
 
@@ -19,7 +19,7 @@ def plugin_loaded():
         else:
             sublime.error_message("ZMQ Shared Library not found at %s" % cmd)
     else:
-        zmq = cdll.LoadLibrary('C:/Users/karbarcca/.julia/ZMQ/deps/usr/lib/libzmq')
+        zmq = cdll.LoadLibrary('C:/Users/karbarcca/.julia/v0.3/ZMQ/deps/usr/lib/libzmq.dll')
     #Return types
     zmq.zmq_msg_data.restype = c_char_p
     zmq.zmq_ctx_new.restype = c_void_p
@@ -48,13 +48,13 @@ def zmq_error():
     return er[:].decode()
 
 def zmq_profile(filename, id):
-    t = {"hb_port":50680 + (5*(id)),
-         "control_port":50679 + (5*(id)),
-         "stdin_port":50678 + (5*(id)),
+    t = {"hb_port":5680 + (5*(id)),
+         "control_port":5679 + (5*(id)),
+         "stdin_port":5678 + (5*(id)),
          "ip":"127.0.0.1",
          "transport":"tcp",
-         "shell_port":50681 + (5*(id)),
-         "iopub_port":50682 + (5*(id)),
+         "shell_port":5681 + (5*(id)),
+         "iopub_port":5682 + (5*(id)),
          "key":""}
     f = open(filename[1:-1], 'w')
     f.write(json.dumps(t))
@@ -145,6 +145,16 @@ class Socket(object):
         self.send_msg(metadata, SNDMORE)
         self.send_msg(content)
 
+    def recv_msg_bytes(self):
+            if self.alive:
+                m = Message()
+                zmq.zmq_msg_recv(byref(m.msg),self.ptr,NOBLOCK)
+                data = zmq.zmq_msg_data(byref(m.msg))
+                length = zmq.zmq_msg_size(byref(m.msg))
+                return data[:length]
+            else:
+                return ''
+
     def recv_msg(self):
         if self.alive:
             m = Message()
@@ -192,8 +202,6 @@ class Socket(object):
 class KernelManager(object):
     def __init__(self, id, cmd):
         self.id = id
-        filename = '\"' + sublime.packages_path() + '/User/profile-' + str(id) + '.json\"'
-        profile = zmq_profile(filename, id)
         e = os.path.expanduser
         ju = e(cmd['julia'])
         iju = e(cmd['ijulia_kernel'])
@@ -202,11 +210,18 @@ class KernelManager(object):
                 sublime.error_message("IJulia kernel.jl file not found at %s" % iju)
             else:
                 iju = iju.replace("/v0.3","")
-        c = ju + ' ' + cmd['julia_args'] + ' ' + iju + ' ' + filename
-        if sublime.platform() == "windows":
+        if debug:
+            filename = '\"C:/Users/karbarcca/AppData/Roaming/Sublime Text 3/Packages/IJulia/profile-' + str(id) + '.json\"'
+            profile = zmq_profile(filename, id)
             creationflags = 0x8000000 # CREATE_NO_WINDOW
         else:
-            creationflags = 0
+            filename = '\"' + sublime.packages_path() + '/User/profile-' + str(id) + '.json\"'
+            profile = zmq_profile(filename, id)
+            if sublime.platform() == "windows":
+                creationflags = 0x8000000 # CREATE_NO_WINDOW
+            else:
+                creationflags = 0
+        c = ju + ' ' + cmd['julia_args'] + ' ' + iju + ' ' + filename
         print('Command Executed: %s' % c)
         self.kernel = Popen(c, shell=True, creationflags=creationflags)
         ip = profile['transport'] + '://' + profile['ip'] + ':'
