@@ -1,4 +1,5 @@
 [
+	{ "command": "i_julia_set_working_folder_to_view", "caption": "IJulia: Set as working dir" },
     { "caption": "Sublime-IJulia: Open New IJulia Console", "command": "i_julia_open"},
     { "caption": "Apply Julia Syntax to .jl Files", "command": "julia_syntax"},
     { "caption": "Sublime-IJulia: Enter", "command": "i_julia_enter"},
