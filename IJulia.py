@@ -267,7 +267,7 @@ class IJuliaSetWorkingFolderToView(sublime_plugin.TextCommand):
         import os
         fileDir = os.path.dirname( self.view.file_name() )
         
-        cmd = 'cd("' + fileDir + '")'
+        cmd = 'cd("' + fileDir.replace("\\","\\\\") + '")'
         
         mg = manager
         jvs = mg.julia_views
@@ -307,7 +307,7 @@ class IJuliaTransferCurrent(sublime_plugin.TextCommand):
             # if view doesn't have a file name,
             #  it will ask for one
             self.view.run_command("save")
-            text = 'include("' + self.view.file_name() + '")'
+            text = 'include("' + self.view.file_name().replace("\\","\\\\") + '")'
         
         mg = manager
         jvs = mg.julia_views
