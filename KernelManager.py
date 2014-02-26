@@ -198,8 +198,9 @@ class Socket(object):
         m = Msg(idents, json.loads(header), json.loads(content), json.loads(parent_header), json.loads(metadata))
         return m
         
-class KernelManager(object):
-    def __init__(self, id, cmd):
+class KernelManager(threading.Thread):
+    def __init__(self, id, cmd, jv):
+        super(KernelManager, self).__init__()
         self.id = id
         e = os.path.expanduser
         ju = e(cmd['julia'])
@@ -231,6 +232,17 @@ class KernelManager(object):
         self.shell.connect(ip + str(profile['shell_port']))
         self.sub = Socket(self.context, SUB)
         self.sub.connect(ip + str(profile['iopub_port']))
+        self.jv = jv
+        self.startup = 1
+        self.liveness = 5
+        self.handlers = {'': self.emp_h,
+                     'pyin': self.pyin_h,
+                     'pyout': self.pyout_h,
+                     'pyerr': self.pyerr_h,
+                     'stdout': self.stdout_h,
+                     'stderr': self.stderr_h,
+                     'status': self.status_h,
+                     'display_data': self.display_data_h}
 
     def interrupt(self):
         if sublime.platform() != "windows":
@@ -314,33 +326,14 @@ class KernelManager(object):
         m = self.sub.recv()
         return
 
-class RecvThread(threading.Thread):
-    def __init__(self, kernel, julia_view):
-        super(RecvThread, self).__init__()
-        self.kernel = kernel
-        self.heartbeat = kernel.heartbeat
-        self.sub = kernel.sub
-        self.shell = kernel.shell
-        self.jv = julia_view
-        self.startup = 1
-        self.liveness = 5
-        self.handlers = {'': self.emp_h,
-                     'pyin': self.pyin_h,
-                     'pyout': self.pyout_h,
-                     'pyerr': self.pyerr_h,
-                     'stdout': self.stdout_h,
-                     'stderr': self.stderr_h,
-                     'status': self.status_h,
-                     'display_data': self.display_data_h}
-
     def emp_h(self):
-        r = self.kernel.hb_send()
+        r = self.hb_send()
         time.sleep(.1)
-        response = self.kernel.hb_recv()
+        response = self.hb_recv()
         if self.startup:
             time.sleep(.1)
-            self.kernel.kernel.poll()
-            if self.kernel.kernel.returncode != None:
+            self.kernel.poll()
+            if self.kernel.returncode != None:
                 return 0
                 #sublime.error_message('IJulia Kernel failed to start. Check your "julia_command" value in the Sublime-IJulia package settings or through the custom command interface. Otherwise, please open an issue to troubleshoot: https://github.com/karbarcca/Sublime-IJulia/issues?state=open')
             return 1
@@ -354,27 +347,27 @@ class RecvThread(threading.Thread):
         return 1
 
     def pyout_h(self):
-        count, data = self.kernel.get_execute_reply()
+        count, data = self.get_execute_reply()
         self.jv.output(count,data)
         return 1
 
     def pyerr_h(self):
-        count, data = self.kernel.get_error_reply()
+        count, data = self.get_error_reply()
         self.jv.output(count,data)
         return 1
 
     def stdout_h(self):
-        data = self.kernel.get_stdout()
+        data = self.get_stdout()
         self.jv.stdout_output(data)
         return 1
 
     def stderr_h(self):
-        data = self.kernel.get_stdout()
+        data = self.get_stdout()
         self.jv.stdout_output(data)
         return 1
 
     def status_h(self):
-        status = self.kernel.get_status()
+        status = self.get_status()
         if status == 'idle':
             self.jv.in_output()
             self.jv._view.set_status("kernel","")
@@ -383,7 +376,7 @@ class RecvThread(threading.Thread):
         return 1
 
     def display_data_h(self):
-        data = self.kernel.get_display_data()
+        data = self.get_display_data()
         #self.jv.display_data_output(data)
         return 1
 
@@ -400,9 +393,9 @@ class RecvThread(threading.Thread):
                 l -= 1
             if l == 0:
                 print("Kernel died, closing sockets....")
-                self.kernel.heartbeat.close()
-                self.kernel.sub.close()
-                self.kernel.shell.close()
+                self.heartbeat.close()
+                self.sub.close()
+                self.shell.close()
                 print("Sockets closed...")
                 self.jv.on_close()
                 break

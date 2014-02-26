@@ -50,9 +50,8 @@ manager = IJuliaManager()
 class IJuliaView(object):
     def start_kernel(self):
         print("Starting IJulia backend...")
-        self.kernel = KernelManager.KernelManager(self.id,self.cmd)
-        self.reader = KernelManager.RecvThread(self.kernel, self)
-        self.reader.start()
+        self.kernel = KernelManager.KernelManager(self.id,self.cmd,self)
+        self.kernel.start()
         self.kernel.execute("Base.banner()")
 
     def __init__(self, view, id, cmd):
@@ -201,7 +200,7 @@ class IJuliaView(object):
     def in_output(self):
         self.write("\nIn  [{:d}]: ".format(self.in_count),True)
         self.in_count += 1
-        self.reader.startup = 0
+        self.kernel.startup = 0
         self._view.show_at_center(self._view.size())
 
     def output(self, count, data):
