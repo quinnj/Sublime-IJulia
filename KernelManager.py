@@ -1,9 +1,9 @@
-import uuid, os, subprocess, threading, time, json
+import os, subprocess, threading, time, json
 from ctypes import *
 from subprocess import Popen
 debug = 0
 if not debug:
-    import sublime, sublime_plugin
+    import sublime, sublime_plugin, uuid
 
 SETTINGS_FILE = 'Sublime-IJulia.sublime-settings'
 
@@ -213,7 +213,7 @@ class KernelManager(object):
         if debug:
             filename = '\"C:/Users/karbarcca/AppData/Roaming/Sublime Text 3/Packages/IJulia/profile-' + str(id) + '.json\"'
             profile = zmq_profile(filename, id)
-            creationflags = 0x8000000 # CREATE_NO_WINDOW
+            creationflags = 0 # CREATE_NO_WINDOW
         else:
             filename = '\"' + sublime.packages_path() + '/User/profile-' + str(id) + '.json\"'
             profile = zmq_profile(filename, id)
@@ -234,7 +234,20 @@ class KernelManager(object):
         self.sub.connect(ip + str(profile['iopub_port']))
 
     def execute(self, code):
-        execute_request = Msg(["execute_request"], 
+        if debug:
+            execute_request = Msg(["execute_request"],
+            {"msg_id": "07033084-5cfd-4812-90a4-e4d24ffb6e3d", 
+             "username": str(self.id), 
+             "session": "07033084-5cfd-4812-90a4-e4d24ffb6e3d", 
+             "msg_type": "execute_request"}, 
+             {"code": code, 
+              "silent": False, 
+              "store_history": False, 
+              "user_variables": list(), 
+              "user_expressions": {}, 
+              "allow_stdin": True}, {})
+        else:
+            execute_request = Msg(["execute_request"],
             {"msg_id": str(uuid.uuid4()), 
              "username": str(self.id), 
              "session": str(uuid.uuid4()), 
@@ -248,7 +261,15 @@ class KernelManager(object):
         ret = self.shell.send(execute_request)
 
     def shutdown(self, restart):
-        shutdown_request = Msg(["shutdown_request"], 
+        if debug:
+            shutdown_request = Msg(["shutdown_request"],
+            {"msg_id": "07033084-5cfd-4812-90a4-e4d24ffb6e3d", 
+             "username": str(self.id), 
+             "session": "07033084-5cfd-4812-90a4-e4d24ffb6e3d", 
+             "msg_type": "shutdown_request"}, 
+             {"restart": restart}, {})
+        else:
+            shutdown_request = Msg(["shutdown_request"],
             {"msg_id": str(uuid.uuid4()), 
              "username": str(self.id), 
              "session": str(uuid.uuid4()), 
@@ -276,7 +297,10 @@ class KernelManager(object):
     def get_error_reply(self):
         m = self.sub.recv()
         count = m.content['execution_count']
-        data = m.content['evalue']
+        data = 'ERROR: '
+        err = m.content['traceback']
+        for i in err:
+            data += i + '\n'
         return count, data  
 
     def get_status(self):
