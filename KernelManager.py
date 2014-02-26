@@ -21,7 +21,7 @@ def plugin_loaded():
     else:
         zmq = cdll.LoadLibrary('C:/Users/karbarcca/.julia/v0.3/ZMQ/deps/usr/lib/libzmq.dll')
     #Return types
-    zmq.zmq_msg_data.restype = c_char_p
+    zmq.zmq_msg_data.restype = c_char_p #technically a c_void_p
     zmq.zmq_ctx_new.restype = c_void_p
     zmq.zmq_socket.restype = c_void_p
     zmq.zmq_setsockopt.restype = c_int
@@ -29,11 +29,13 @@ def plugin_loaded():
     zmq.zmq_close.restype = c_int
     zmq.zmq_send.restype = c_int
     zmq.zmq_msg_recv.restype = c_int
-    zmq.zmq_msg_size.restype = c_int
+    zmq.zmq_msg_size.restype = c_size_t
     zmq.zmq_strerror.restype = c_char_p
+    zmq.zmq_msg_init.restype = c_int
+    zmq.zmq_errno.restype = c_int
     #Argtypes
     zmq.zmq_socket.argtypes = [c_void_p, c_int]
-    zmq.zmq_setsockopt.argtypes = [c_void_p, c_int, c_void_p, c_int]
+    zmq.zmq_setsockopt.argtypes = [c_void_p, c_int, c_void_p, c_size_t]
     zmq.zmq_connect.argtypes = [c_void_p, c_char_p]
     zmq.zmq_close.argtypes = [c_void_p]
     zmq.zmq_send.argtypes = [c_void_p, c_void_p, c_size_t, c_int]
@@ -73,15 +75,12 @@ DONTWAIT = 1
 SNDMORE = 2
 
 class _Message(Structure):
-    _fields_ = [
-        ("w0", c_longlong),
-        ("w1", c_longlong),
-        ("w2", c_longlong),
-        ("w3", c_longlong)]
+    _fields_ = [("_", c_ubyte * 32)]
 
+#MSG_NULL = 
 class Message(object):
     def __init__(self):
-        self.msg = _Message(0,0,0,0)
+        self.msg = _Message()
         zmq.zmq_msg_init(byref(self.msg))
 
 class Msg(object):
