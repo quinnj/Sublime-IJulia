@@ -233,6 +233,10 @@ class KernelManager(object):
         self.sub = Socket(self.context, SUB)
         self.sub.connect(ip + str(profile['iopub_port']))
 
+    def interrupt(self):
+        if sublime.platform() != "windows":
+            self.kernel.send_signal(2)
+
     def execute(self, code):
         if debug:
             execute_request = Msg(["execute_request"],

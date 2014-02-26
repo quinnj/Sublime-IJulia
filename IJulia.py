@@ -82,6 +82,9 @@ class IJuliaView(object):
         self._view.set_read_only(True)
         manager.remove_ijulia_view(self)
 
+    def interrupt(self):
+        self.kernel.interrupt()
+
     def update_view(self, view):
         if self._view is not view:
             self._view = view
@@ -428,6 +431,12 @@ class IJuliaViewNextCommand(sublime_plugin.TextCommand):
 class JuliaPass(sublime_plugin.TextCommand):
     def run(self, edit):
         pass
+
+class IJuliaInterrupt(sublime_plugin.TextCommand):
+    def run(self, edit):
+        rv = manager.julia_view(self.view)
+        if rv:
+            rv.interrupt()
 
 class IJuliaListener(sublime_plugin.EventListener):
     #def on_selection_modified(self, view):

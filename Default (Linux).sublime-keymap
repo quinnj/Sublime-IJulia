@@ -109,5 +109,11 @@
             { "key": "selection_empty", "operator": "equal", "operand": true, "match_all": true },
             { "key": "selector", "operator": "equal", "operand": "source.julia"}
         ]
+    },
+    { "keys": ["f5"], "command": "i_julia_interrupt", "args": {},
+    "context":
+        [
+            { "key": "setting.julia", "operator": "equal", "operand": true }
+        ]
     }
 ]
