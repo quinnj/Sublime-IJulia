@@ -185,7 +185,7 @@ class IJuliaView(object):
         manager.cmdhist = list(self.unique(manager.cmdhist))
         self.cmdstate = -1
         self.command = command
-        sublime.set_timeout_async(self.execute,0)
+        self.execute()
         
     def execute(self):
         self.kernel.execute(self.command)
