@@ -1,5 +1,5 @@
 import os, time, sublime, sublime_plugin
-from . import KernelManager
+from . import Kernel
 
 SETTINGS_FILE = 'Sublime-IJulia.sublime-settings'
 
@@ -50,9 +50,9 @@ manager = IJuliaManager()
 class IJuliaView(object):
     def start_kernel(self):
         print("Starting IJulia backend...")
-        self.kernel = KernelManager.KernelManager(self.id,self.cmd,self)
+        self.kernel = Kernel.Kernel(self.id,self.cmd,self)
         self.kernel.start()
-        self.kernel.execute("Base.banner()")
+        self.kernel.queue.put_nowait("Base.banner()")
 
     def __init__(self, view, id, cmd):
         self.id = id
@@ -178,18 +178,13 @@ class IJuliaView(object):
             v.sel().add(sublime.Region(v.size()))
         v.run_command("i_julia_insert_text", {"pos": v.sel()[0].begin(), "text": '\n'})
         command = self.user_input
-        #v.run_command("insert", {"characters": '\n'})
         self._output_end += len(command)
         self.stdout_pos = self._output_end
         manager.cmdhist.insert(0,command[:-1])
         manager.cmdhist = list(self.unique(manager.cmdhist))
         self.cmdstate = -1
-        self.command = command
-        self.execute()
+        self.kernel.queue.put_nowait(command)
         
-    def execute(self):
-        self.kernel.execute(self.command)
-
     def stdout_output(self, data):
         data = data.replace('\r\n','\n')
         self._view.run_command("i_julia_insert_text", 

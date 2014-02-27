@@ -1,4 +1,4 @@
-import os, subprocess, threading, time, json
+import os, subprocess, threading, time, json, sys, queue
 from ctypes import *
 from subprocess import Popen
 debug = 0
@@ -11,13 +11,19 @@ def plugin_loaded():
     global zmq
     if not debug:
         settings = sublime.load_settings(SETTINGS_FILE)
-        cmd = os.path.expanduser(settings.get(sublime.platform())["zmq_shared_library"])
-        if os.path.exists(cmd):
-            zmq = cdll.LoadLibrary(cmd)
-        elif os.path.exists(cmd.replace("/v0.3","")):
-            zmq = cdll.LoadLibrary(cmd.replace("/v0.3",""))
+        plat = sublime.platform()
+        cmd = settings.get(plat)
+        if plat == "windows":
+            p = os.path.dirname(__file__) + '/windeps/'
+            print(p)
+            os.environ['PATH'] = p + ';' + os.environ['PATH']
+        zmq_lib = os.path.expanduser(cmd["zmq_shared_library"])
+        if os.path.exists(zmq_lib):
+            zmq = cdll.LoadLibrary(zmq_lib)
+        elif os.path.exists(zmq_lib.replace("/v0.3","")):
+            zmq = cdll.LoadLibrary(zmq_lib.replace("/v0.3",""))
         else:
-            sublime.error_message("ZMQ Shared Library not found at %s" % cmd)
+            sublime.error_message("ZMQ Shared Library not found at %s" % zmq_lib)
     else:
         zmq = cdll.LoadLibrary('C:/Users/karbarcca/.julia/v0.3/ZMQ/deps/usr/lib/libzmq.dll')
     #Return types
@@ -28,11 +34,13 @@ def plugin_loaded():
     zmq.zmq_connect.restype = c_int
     zmq.zmq_close.restype = c_int
     zmq.zmq_send.restype = c_int
+    zmq.zmq_msg_init.restype = c_int
     zmq.zmq_msg_recv.restype = c_int
     zmq.zmq_msg_size.restype = c_size_t
+    zmq.zmq_msg_close.restype = c_int
     zmq.zmq_strerror.restype = c_char_p
-    zmq.zmq_msg_init.restype = c_int
     zmq.zmq_errno.restype = c_int
+    zmq.zmq_ctx_destroy.restype = c_int
     #Argtypes
     zmq.zmq_socket.argtypes = [c_void_p, c_int]
     zmq.zmq_setsockopt.argtypes = [c_void_p, c_int, c_void_p, c_size_t]
@@ -43,6 +51,8 @@ def plugin_loaded():
     zmq.zmq_msg_recv.argtypes = [POINTER(_Message), c_void_p, c_int]
     zmq.zmq_msg_data.argtypes = [POINTER(_Message)]
     zmq.zmq_msg_size.argtypes = [POINTER(_Message)]
+    zmq.zmq_msg_close.argtypes = [POINTER(_Message)]
+    zmq.zmq_ctx_destroy.argtypes = [c_void_p]
 
 def zmq_error():
     err = zmq.zmq_errno()
@@ -77,7 +87,6 @@ SNDMORE = 2
 class _Message(Structure):
     _fields_ = [("_", c_ubyte * 32)]
 
-#MSG_NULL = 
 class Message(object):
     def __init__(self):
         self.msg = _Message()
@@ -102,6 +111,9 @@ class Context(object):
     def __init__(self):
         self.ptr = zmq.zmq_ctx_new()
         self.sockets = []
+
+    def close(self):
+        zmq.zmq_ctx_destroy(self.ptr)
 
 class Socket(object):
     def __init__(self, context, sock_type):
@@ -150,6 +162,7 @@ class Socket(object):
                 zmq.zmq_msg_recv(byref(m.msg),self.ptr,NOBLOCK)
                 data = zmq.zmq_msg_data(byref(m.msg))
                 length = zmq.zmq_msg_size(byref(m.msg))
+                zmq.zmq_msg_close(byref(m.msg))
                 return data[:length]
             else:
                 return ''
@@ -160,6 +173,7 @@ class Socket(object):
             zmq.zmq_msg_recv(byref(m.msg),self.ptr,NOBLOCK)
             data = zmq.zmq_msg_data(byref(m.msg))
             length = zmq.zmq_msg_size(byref(m.msg))
+            zmq.zmq_msg_close(byref(m.msg))
             return data[:length].decode()
         else:
             return ''
@@ -198,13 +212,16 @@ class Socket(object):
         m = Msg(idents, json.loads(header), json.loads(content), json.loads(parent_header), json.loads(metadata))
         return m
         
-class KernelManager(threading.Thread):
+class Kernel(threading.Thread):
     def __init__(self, id, cmd, jv):
-        super(KernelManager, self).__init__()
+        super(Kernel, self).__init__()
         self.id = id
         e = os.path.expanduser
         ju = e(cmd['julia'])
         iju = e(cmd['ijulia_kernel'])
+        if 'julia_type' in cmd and 'binary' in cmd['julia_type']:
+                p = os.path.dirname(cmd['julia'])
+                os.environ['PATH'] += p                
         if not os.path.exists(iju):
             if not os.path.exists(iju.replace("/v0.3","")):
                 sublime.error_message("IJulia kernel.jl file not found at %s" % iju)
@@ -232,9 +249,11 @@ class KernelManager(threading.Thread):
         self.shell.connect(ip + str(profile['shell_port']))
         self.sub = Socket(self.context, SUB)
         self.sub.connect(ip + str(profile['iopub_port']))
+        self.queue = queue.Queue()
         self.jv = jv
         self.startup = 1
         self.liveness = 5
+        self.idle = True
         self.handlers = {'': self.emp_h,
                      'pyin': self.pyin_h,
                      'pyout': self.pyout_h,
@@ -335,7 +354,6 @@ class KernelManager(threading.Thread):
             self.kernel.poll()
             if self.kernel.returncode != None:
                 return 0
-                #sublime.error_message('IJulia Kernel failed to start. Check your "julia_command" value in the Sublime-IJulia package settings or through the custom command interface. Otherwise, please open an issue to troubleshoot: https://github.com/karbarcca/Sublime-IJulia/issues?state=open')
             return 1
         elif response or r:
             return 1
@@ -371,8 +389,10 @@ class KernelManager(threading.Thread):
         if status == 'idle':
             self.jv.in_output()
             self.jv._view.set_status("kernel","")
+            self.idle = True
         else:
             self.jv._view.set_status("kernel","IJulia kernel is working...")
+            self.idle = False
         return 1
 
     def display_data_h(self):
@@ -382,7 +402,11 @@ class KernelManager(threading.Thread):
 
     def run(self):
         l = self.liveness
+        q = self.queue
         while True:
+            if self.idle and not q.empty():
+                code = q.get_nowait()
+                self.execute(code)
             self.shell.recv_msg()
             m = self.sub.recv_msg()
             r = self.handlers.get(m, self.pyin_h)()
@@ -394,8 +418,9 @@ class KernelManager(threading.Thread):
             if l == 0:
                 print("Kernel died, closing sockets....")
                 self.heartbeat.close()
-                self.sub.close()
                 self.shell.close()
+                self.sub.close()
                 print("Sockets closed...")
                 self.jv.on_close()
+                self.context.close()
                 break
