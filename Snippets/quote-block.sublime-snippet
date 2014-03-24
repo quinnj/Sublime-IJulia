@@ -1,0 +1,9 @@
+<snippet>
+	<content><![CDATA[
+quote
+	${0:#quote block body}
+end
+]]></content>
+	<tabTrigger>quote</tabTrigger>
+	<scope>source.julia</scope>
+</snippet>

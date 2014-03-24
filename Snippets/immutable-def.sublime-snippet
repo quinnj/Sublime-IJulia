@@ -1,0 +1,9 @@
+<snippet>
+    <content><![CDATA[
+immutable ${1:name}
+    ${0:#type body}
+end
+]]></content>
+    <tabTrigger>immutable</tabTrigger>
+    <scope>source.julia</scope>
+</snippet>

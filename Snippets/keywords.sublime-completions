@@ -1,0 +1,23 @@
+{
+ "scope": "source.julia",
+
+"completions":
+[{ "trigger": "abstract", "contents": "abstract ${1:name}" },
+{ "trigger": "typealias", "contents": "typealias ${1:name} ${2:definition}" },
+{ "trigger": "bitstype", "contents": "bitstype ${1:size} ${1:name}" },
+{ "trigger": "new", "contents": "new()" },
+{ "trigger": "end", "contents": "end" },
+{ "trigger": "continue", "contents": "continue" },
+{ "trigger": "break", "contents": "break" },
+{ "trigger": "return", "contents": "return " },
+{ "trigger": "global", "contents": "global " },
+{ "trigger": "local", "contents": "local " },
+{ "trigger": "const", "contents": "const " },
+{ "trigger": "export", "contents": "export " },
+{ "trigger": "import", "contents": "import " },
+{ "trigger": "importall", "contents": "importall " },
+{ "trigger": "using", "contents": "using " },
+{ "trigger": "true", "contents": "true" },
+{ "trigger": "false", "contents": "false" }
+]
+}

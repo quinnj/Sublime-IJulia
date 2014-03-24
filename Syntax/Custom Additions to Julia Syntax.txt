@@ -52,3 +52,7 @@
 <key>begin</key>
 <string>`(?!\s\|\s\s\|)</string>
 <key>beginCaptures</key>
+
+# DataFrames misuse of Col # and Row #
+# line 169
+<string>(?&lt;!Col\s)(?&lt;!Row\s)(?&lt;!\$)(#)(?!\{).*$\n?</string>
