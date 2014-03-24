@@ -23,7 +23,7 @@ See the [IJulia](https://github.com/JuliaLang/IJulia.jl) page for additional hel
 
 
 #### Sublime-IJulia Installation
-The Sublime-IJulia project requires Sublime Text 3 with build version > 3019. You can get the latest version [here](http://www.sublimetext.com/3).
+The Sublime-IJulia project requires Sublime Text 3 with build version > 3019. You can get the latest version [here](http://www.sublimetext.com/3). It also requires a version of the ZMQ library >= 2.0 (the default installation through Julia brings in a working version, so this is only an issue when trying to use system ZMQ libraries). 
 
 
 1. Within Sublime Text 3, install the Package Control package from [here](https://sublime.wbond.net/installation)
