@@ -33,7 +33,7 @@ class IJuliaManager(object):
         julia_id = view.settings().get("julia_id")
         if julia_id == None:
             return None
-        jv = self.julia_views[julia_id]
+        jv = self.julia_views.get(julia_id)
         return jv
 
     def remove_ijulia_view(self, view):
@@ -192,7 +192,9 @@ class IJuliaView(object):
         self.in_count += 1
         self.kernel.startup = 0
         vec = self._view.text_to_layout(self._view.size())[1] - self._view.viewport_extent()[1] + 50.0
-        self._view.set_viewport_position((0.0, max(0,vec)))
+        cur_pos = self._view.viewport_position()[1]
+        if vec > cur_pos:
+            self._view.set_viewport_position((0.0, max(0,vec)))
 
     def output(self, count, data):
         out = "\nOut [{:d}]: {!s}\n".format(self.in_count-1, data)
