@@ -335,7 +335,7 @@ class Kernel(threading.Thread):
         err = m.content['traceback']
         for i in err:
             data += i + '\n'
-        return count, data  
+        return count, data[:-1]  
 
     def get_status(self):
         m = self.sub.recv()

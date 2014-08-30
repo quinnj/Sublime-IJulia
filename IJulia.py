@@ -5,26 +5,28 @@ SETTINGS_FILE = 'Sublime-IJulia.sublime-settings'
 
 class IJuliaManager(object):
     def __init__(self):
-        self.julia_views = []
+        self.julia_views = {}
+        self.count = 0
         self.text_transfer = ""
         self.cmdhist = [""]
 
     def open(self, window, cmd):
-        id = len(self.julia_views)
+        self.count += 1
+        id = self.count
         view = window.new_file()
         jv = IJuliaView(view, id, cmd)
-        self.julia_views.append(jv)
+        self.julia_views[id] = jv
         view.set_scratch(True)
         view.set_name("*IJulia %d*" % id) 
         return jv        
 
     def restart(self, jv, edit):
-        jv.on_close()
-        id = len(self.julia_views)
-        jv = IJuliaView(jv._view, id)
-        self.julia_views.append(jv)
-        view.set_scratch(True)
-        view.set_name("*IJulia %d*" % id)
+        jv.kernel.queue.put_nowait("workspace()")
+        jv._view.erase(edit, jv.output_region)
+        jv._output_end = jv._view.sel()[0].begin()
+        jv.stdout_pos = 0
+        jv.cmdstate = -1
+        jv.in_count = 2
         return True
 
     def julia_view(self, view):
@@ -32,7 +34,6 @@ class IJuliaManager(object):
         if julia_id == None:
             return None
         jv = self.julia_views[julia_id]
-        #jv.update_view(view)
         return jv
 
     def remove_ijulia_view(self, view):
@@ -41,9 +42,6 @@ class IJuliaManager(object):
             return None
         jvs = manager.julia_views
         del jvs[julia_id]
-        for i in range(0,len(jvs)):
-            jvs[i]._view.settings().set("julia_id", i)
-            jvs[i]._view.set_name("IJulia %d*" % i)
 
 manager = IJuliaManager()
 
@@ -121,9 +119,6 @@ class IJuliaView(object):
         else:
             for i in range(abs(self.delta)):
                 self._window.run_command("move", {"by": "characters", "forward": False, "extend": True})
-
-    # def on_selection_modified(self):
-    #     self._view.show_at_center(self._view.size()-75)
 
     def escape(self, edit):
         self._view.set_read_only(False)
@@ -275,19 +270,21 @@ class IJuliaSetWorkingFolderToView(sublime_plugin.TextCommand):
         elif len(jvs) > 1:
             mg.text_transfer = cmd
             panel_list = []
-            for v in jvs:
-                panel_list.append(v._view.name())
+            self.views
+            for id in jvs:
+                panel_list.append(jvs[id]._view.name())
+                self.views.append(jvs[id])
             self.view.window().show_quick_panel(panel_list, self.choose_julia,sublime.MONOSPACE_FONT)
         else:
-            jv = jvs[0]
+            jv = list(jvs.values())[0]
             jv.write(cmd,False)
             jv.enter(edit)
         
         
-    def choose_julia(edi,num):
+    def choose_julia(self,num):
         if num == -1:
             return
-        jv = manager.julia_views[num]
+        jv = self.views[num]
         jv.write(manager.text_transfer,False)
         jv._view.run_command("i_julia_enter", {})
             
@@ -310,25 +307,28 @@ class IJuliaTransferCurrent(sublime_plugin.TextCommand):
         mg = manager
         jvs = mg.julia_views
         if len(jvs) == 0:
-            jv = mg.open(self.view.window())
+            self.view.run_command("i_julia_open", {})
+            jv = mg.julia_views[mg.count]
             #need to wait to write text until after banner is displayed
             jv.write(text,False)
             jv.enter(edit)
         elif len(jvs) > 1:
             mg.text_transfer = text
             panel_list = []
-            for v in jvs:
-                panel_list.append(v._view.name())
+            self.views = []
+            for id in jvs:
+                panel_list.append(jvs[id]._view.name())
+                self.views.append(jvs[id])
             self.view.window().show_quick_panel(panel_list, self.choose_julia,sublime.MONOSPACE_FONT)
         else:
-            jv = jvs[0]
+            jv = list(jvs.values())[0]
             jv.write(text,False)
             jv.enter(edit)
 
-    def choose_julia(edi,num):
+    def choose_julia(self,num):
             if num == -1:
                 return
-            jv = manager.julia_views[num]
+            jv = self.views[num]
             jv.write(manager.text_transfer,False)
             jv._view.run_command("i_julia_enter", {})
 

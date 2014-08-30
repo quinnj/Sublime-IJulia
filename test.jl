@@ -37,9 +37,20 @@ using Distributions
 Normal()
 #should see Normal( μ=0.0 σ=1.0 )
 
-#entering commands with unicode characters
 μ = 1
-#currently doesn't work on Windows
+μ
+
+#Multi-repl
+ # open two repls
+ # shift+enter to send command to repl
+ x = 1
+ # should have pop up menu at top to select among open repls
+ # select one and input should go to that one
+ # pressing escape from menu results in no input sent to either repl
+
+#Restart
+ # from a repl, press ctrl+shift+r
+ # runs the workspace() command and clears the console output
 
 
 #REPL Key-bindings
@@ -58,14 +69,3 @@ Normal()
 #ctrl+enter with selection
 #ctrl+enter no selection (line)
 #ctrl+shift+enter (file)
-
-# -REPL Tests
-#  -multiple repl testing
-#   -start more than one repl
-#   -use ctrl+enter to send command and choose which repl
-#  -settings file
-#  -repl restart by ctrl+r
-#  -signal handling
-#  -sending unicode characters
-#  -displaying unicode characters
-#  -sublime 2? sublime 3?
