@@ -15,7 +15,7 @@ class IJuliaManager(object):
         jv = IJuliaView(view, id, cmd)
         self.julia_views.append(jv)
         view.set_scratch(True)
-        view.set_name("*IJulia %d*" % id)
+        view.set_name("*IJulia %d*" % id) 
         return jv        
 
     def restart(self, jv, edit):
@@ -196,7 +196,8 @@ class IJuliaView(object):
         self.write("\nIn  [{:d}]: ".format(self.in_count),True)
         self.in_count += 1
         self.kernel.startup = 0
-        self._view.show_at_center(self._view.size())
+        vec = self._view.text_to_layout(self._view.size())[1] - self._view.viewport_extent()[1] + 50.0
+        self._view.set_viewport_position((0.0, max(0,vec)))
 
     def output(self, count, data):
         out = "\nOut [{:d}]: {!s}\n".format(self.in_count-1, data)
