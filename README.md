@@ -51,6 +51,7 @@ From a julia file (extension .jl), you also have the ability to "send" code to t
 * `Ctrl+shift+enter` will send the entire file's contents to the console to be executed
 
 #### Other Sublime-IJulia Package Features
+* A suggestion when working with `.jl` julia files is to have your Sublime tab settings set to spaces, since this is the preferred styled. You can do this by having `"translate_tabs_to_spaces": true,` in your Preferences=>Settings -- User file.
 * Auto-completion: Most of the [stdlib](http://docs.julialang.org/en/latest/stdlib/base/#) julia functions can be auto-completed from the console and julia (.jl) files. Just start typing a function name and press `tab` to auto-complete with the expected arguments.
 * Syntax: Syntax highlighting is available for julia files (.jl), you can set them manually by clicking in the lower right-hand side of sublime (there will be "Text" or some other language displayed) and select "Julia" from the list
 * You can also automatically apply the Julia syntax by typing `Ctrl+Shift+p` and start typing "Apply Julia syntax" and select that command. This will automatically apply the Julia syntax to all open (.jl) files.
