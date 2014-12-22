@@ -21,6 +21,10 @@
         <array>
                 <dict>
                         <key>include</key>
+                        <string>#EmbeddedCXX</string>
+                </dict>
+                <dict>
+                        <key>include</key>
                         <string>#EmbeddedSQL</string>
                 </dict>
                 <dict>
@@ -75,6 +79,70 @@
                                         <string>ERROR:.*</string>
                                         <key>name</key>
                                         <string>invalid.deprecated.julia</string>
+                                </dict>
+                        </array>
+                </dict>
+                <key>EmbeddedCXX</key>
+                <dict>
+                        <key>patterns</key>
+                        <array>
+                                <dict>
+                                        <key>begin</key>
+                                        <string>\b(i?cxx""")</string>
+                                        <key>beginCaptures</key>
+                                        <dict>
+                                                <key>1</key>
+                                                <dict>
+                                                        <key>name</key>
+                                                        <string>punctuation.definition.string.begin.julia</string>
+                                                </dict>
+                                        </dict>
+                                        <key>end</key>
+                                        <string>"""</string>
+                                        <key>endCaptures</key>
+                                        <dict>
+                                                <key>1</key>
+                                                <dict>
+                                                        <key>name</key>
+                                                        <string>punctuation.definition.string.end.julia</string>
+                                                </dict>
+                                        </dict>
+                                        <key>patterns</key>
+                                        <array>
+                                                <dict>
+                                                        <key>include</key>
+                                                        <string>source.c++</string>
+                                                </dict>
+                                        </array>
+                                </dict>
+                                <dict>
+                                        <key>begin</key>
+                                        <string>\b(i?cxx")</string>
+                                        <key>beginCaptures</key>
+                                        <dict>
+                                                <key>1</key>
+                                                <dict>
+                                                        <key>name</key>
+                                                        <string>punctuation.definition.string.begin.julia</string>
+                                                </dict>
+                                        </dict>
+                                        <key>end</key>
+                                        <string>"</string>
+                                        <key>endCaptures</key>
+                                        <dict>
+                                                <key>1</key>
+                                                <dict>
+                                                        <key>name</key>
+                                                        <string>punctuation.definition.string.end.julia</string>
+                                                </dict>
+                                        </dict>
+                                        <key>patterns</key>
+                                        <array>
+                                                <dict>
+                                                        <key>include</key>
+                                                        <string>source.c++</string>
+                                                </dict>
+                                        </array>
                                 </dict>
                         </array>
                 </dict>
