@@ -116,4 +116,8 @@
             { "key": "setting.julia", "operator": "equal", "operand": true }
         ]
     }
+    { 	"keys": ["escape"], 
+		"context":  [
+			{"key": "selector", "operator": "equal"}],
+		"command": "insert_greek"}
 ]
