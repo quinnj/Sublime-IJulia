@@ -44,7 +44,7 @@
     ]
 },
 "osx": {
-    "zmq_shared_library": "/usr/local/Cellar/zeromq/3.2.4/lib/libzmq.dylib",
+    "zmq_shared_library": "~/.julia/v0.4/Homebrew/deps/usr/lib/libzmq.dylib",
     "commands": [
         {
             "command_name": "default",
