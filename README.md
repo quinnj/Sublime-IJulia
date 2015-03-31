@@ -27,34 +27,34 @@ The Sublime-IJulia project requires Sublime Text 3 with build version > 3019. Yo
 
 
 1. Within Sublime Text 3, install the Package Control package from [here](https://sublime.wbond.net/installation)
-2. With Package Control successfully installed (you may need to resetart sublime), run `Ctrl+Shift+p` (`Cmd+Shift+p` on OSX) to open the Sublime command pallette and start typing "Install Package", then select "Package Control: Install Package".
+2. With Package Control successfully installed (you may need to resetart sublime), run <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> (<kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> on OSX) to open the Sublime command pallette and start typing "Install Package", then select "Package Control: Install Package".
 3. From the list of packages that are then shown, start typing "IJulia" and then select the "IJulia" package. This installs the IJulia package into your Sublime packages directory.
 4. From the menu bar, open `Preferences => Package Settings => Sublime-IJulia => Settings - Default`
 5. Then, from the menu bar, open `Preferences => Package Settings => Sublime-IJulia => Settings - User`
 6. Copy everything from the `Settings - Default` file into the `Settings - User` file
 7. Now, in the `Settings - User` file, scroll down to your platform, you should typically *not* have to change the `zmq_shared_library` field value. These are the expected standard installation locations when installing/building the ZMQ package from within julia, so they should work out of the box. Note, however, for Linux or OSX, that if the ZMQ library was already installed via apt/yum/homebrew, the default path will probably not be correct. The easiest way to locate your ZMQ library (on any platform) is to to run the following commands from within julia: `using ZMQ; ZMQ.zmq`. Sometimes, all that is returned is `libzmq` which obviously isn't that helpful. In any case, if you do a file system search for `libzmq`, you should be able to locate the absolute path to the library which is needed for your `zmq_shared_library` settings value. *PLEASE NOTE: When setting your path, you MUST specify the library extension as well. `/path/to/zmq/libzmq.so` or `/path/to/zmq/libzmq.so.3` for linux, `/path/to/zmq/libzmq.dylib` for OSX, and `/path/to/zmq/libzmq.dll` on windows.* This is by far the toughest step to manage because of the cross-platform issues and non-standard installation locations, but be willing to try a few different paths and restart Sublime in between each attempt. Another tip is to specify the *absolute* path to the ZMQ library (instead of using `~/...` or relative paths. If you're still having issues, please open an issue as mentioned above.
 8. Now change the value of the `"julia": "julia",` field to the absolute path to your julia executable. If julia is on your path, this may not involve changing anything (i.e if you can type `julia` or `julia-readline` from the command line from any directory). Otherwise put the full path to your julia executable (i.e. `/usr/home/julia/usr/bin/julia`).
-9. With the above two values properly set in the settings file (you should *not* have to change the "ijulia_kernel" value, you can now run `Ctrl+Shift+p` to open the command pallette and start typing "Open IJulia" and select "Sublime-IJulia: Open New IJulia Console". If all goes well, a new view should open up in Sublime, titled `*IJulia 0*` and the julia banner should display shortly (2-5 seconds). Success! 
+9. With the above two values properly set in the settings file (you should *not* have to change the "ijulia_kernel" value, you can now run <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> to open the command pallette and start typing "Open IJulia" and select "Sublime-IJulia: Open New IJulia Console". If all goes well, a new view should open up in Sublime, titled `*IJulia 0*` and the julia banner should display shortly (2-5 seconds). Success! 
 10. If an error message pops up, it's probably because Sublime can't find your ZMQ library or julia executable, return to step 7/8. If `***Kernel Died***` shows up in a new view, there's been some kind of error in your julia command, so return to step 7. In any case, please go back over the steps to ensure everything was followed, restart Sublime, and if the results are the same, please open an issue [here](https://github.com/karbarcca/Sublime-IJulia/issues) and I'm more than happy to help troubleshoot the installation.
 
 #### Using Sublime-IJulia
-* Commands can be entered directly in the IJulia console view, pressing `shift+enter` to execute. 
+* Commands can be entered directly in the IJulia console view, pressing <kbd>Shift</kbd>+<kbd>Enter</kbd> to execute. 
 * A newline can be entered without executing the command by typing `Enter` for multi-line commands.
-* Pressing the `up` and `down` arrows in the console view will navigate through command history (if any).
-* `escape` will clear the current command
+* Pressing the <kbd>up</kbd> and <kbd>down</kbd> arrows in the console view will navigate through command history (if any).
+* <kbd>Escape</kbd> will clear the current command
 * All other regular sublime features should work as normal also in the console view (multiple cursors, macros, etc.)
 
 
 From a julia file (extension .jl), you also have the ability to "send" code to the console to be evaluated. 
-* `Shift+enter` without any code selected will send the current line to the console to be executed
-* `Shift+enter` with code selected will send the selected text to the console to be executed
-* `Ctrl+shift+enter` will send the entire file's contents to the console to be executed
+* <kbd>Shift</kbd>+<kbd>Enter</kbd> without any code selected will send the current line to the console to be executed
+* <kbd>Shift</kbd>+<kbd>Enter</kbd> with code selected will send the selected text to the console to be executed
+* <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd> will send the entire file's contents to the console to be executed
 
 #### Other Sublime-IJulia Package Features
 * A suggestion when working with `.jl` julia files is to have your Sublime tab settings set to spaces, since this is the preferred styled. You can do this by having `"translate_tabs_to_spaces": true,` in your Preferences=>Settings -- User file.
-* Auto-completion: Most of the [stdlib](http://docs.julialang.org/en/latest/stdlib/base/#) julia functions can be auto-completed from the console and julia (.jl) files. Just start typing a function name and press `tab` to auto-complete with the expected arguments.
+* Auto-completion: Most of the [stdlib](http://docs.julialang.org/en/latest/stdlib/base/#) julia functions can be auto-completed from the console and julia (.jl) files. Just start typing a function name and press <kbd>Tab</kbd> to auto-complete with the expected arguments.
 * Syntax: Syntax highlighting is available for julia files (.jl), you can set them manually by clicking in the lower right-hand side of sublime (there will be "Text" or some other language displayed) and select "Julia" from the list
-* You can also automatically apply the Julia syntax by typing `Ctrl+Shift+p` and start typing "Apply Julia syntax" and select that command. This will automatically apply the Julia syntax to all open (.jl) files.
+* You can also automatically apply the Julia syntax by typing <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> and start typing "Apply Julia syntax" and select that command. This will automatically apply the Julia syntax to all open (.jl) files.
 * Build: A basic build file is provided, but will probably have to be manually tweaked to provide the path to your julia executable. This can be done by opening your Sublime packages folder, going to the IJulia directory and opening the `julia-build.sublime-build` file. Then you just have to change the "julia" in `"cmd": ["julia", "$file"],` to the same value you set in your settings file for `julia_command` (i.e. absolute path to julia, etc.). 
 * Multiple julia commands can be set in the settings file. This is done by adding another "command" object to the "commands" array of your platform. If you were on windows, your entire platform key-value would be:
 
@@ -77,7 +77,7 @@ From a julia file (extension .jl), you also have the ability to "send" code to t
     ]
 }
 ```
-Note the comma `,` after the original default command. Another command is then copied down. The `"julia":` field is changed to a separate julia executable (in this case, a separate branch of julia, but it could also be a past version of julia or whatever). There are also some arguments passed to the julia executable by `"julia_args": "-p 4"`, meaning to start the julia executable with 4 additional processes. With the above commands set, when I go to open a console with `ctrl+shift+p`, type "Open IJulia", a second popup will show me a list of
+Note the comma `,` after the original default command. Another command is then copied down. The `"julia":` field is changed to a separate julia executable (in this case, a separate branch of julia, but it could also be a past version of julia or whatever). There are also some arguments passed to the julia executable by `"julia_args": "-p 4"`, meaning to start the julia executable with 4 additional processes. With the above commands set, when I go to open a console with <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>, type "Open IJulia", a second popup will show me a list of
 
 ```
 default
