@@ -12,7 +12,7 @@
         <key>firstLineMatch</key>
         <string>^#!.*\bjulia\s*$</string>
         <key>foldingStartMarker</key>
-        <string>^\s*(?:if|while|for|begin|function|macro|module|baremodule|type|immutable|let)\b(?!.*\bend\b).*$</string>
+        <string>^\s*(?:if|while|for|begin|function|stagedfunction|macro|module|baremodule|type|immutable|let)\b(?!.*\bend\b).*$</string>
         <key>foldingStopMarker</key>
         <string>^\s*(?:end)\b.*$</string>
         <key>name</key>
@@ -317,7 +317,7 @@
                                 </dict>
                                 <dict>
                                         <key>match</key>
-                                        <string>\b(function|macro)\s+([a-zA-Z0-9_\.]+!?)\b</string>
+                                        <string>\b(function|stagedfunction|macro)\s+([a-zA-Z0-9_\.]+!?)\b</string>
                                         <key>captures</key>
                                         <dict>
                                                 <key>1</key>
@@ -340,7 +340,7 @@
                         <array>
                                 <dict>
                                         <key>match</key>
-                                        <string>\b(?:function|type|immutable|macro|quote|abstract|bitstype|typealias|module|baremodule|new)\b</string>
+                                        <string>\b(?:function|stagedfunction|type|immutable|macro|quote|abstract|bitstype|typealias|module|baremodule|new)\b</string>
                                         <key>name</key>
                                         <string>keyword.other.julia</string>
                                 </dict>
